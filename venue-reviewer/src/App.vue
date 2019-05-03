@@ -1,20 +1,25 @@
 <template>
   <div id="app">
-    <h2>Nav Bar</h2>
-    <nav>
-      <h3>Venues</h3>
-      <h3>Profiles</h3>
-    </nav>
+    <h1>Reeeeee</h1>
+  <router-link>nooot</router-link>
+    <NavBar></NavBar>
   </div>
 </template>
 
 <script>
+  import NavBar from './components/NavBar'
+
+
 export default {
   name: 'app',
+  components: {NavBar},
   data () {
     return {
       msg: 'Welcome to Your Vue.js App'
     }
+  },
+  comments: {
+    'NavBar': NavBar
   }
 }
 </script>
