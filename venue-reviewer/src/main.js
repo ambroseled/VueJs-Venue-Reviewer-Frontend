@@ -1,33 +1,39 @@
 import Vue from 'vue'
 import App from './App.vue'
-import Router from 'vue-router'
+import VueRouter from 'vue-router'
 import Venues from './components/Venues.vue'
 import Reviews from './components/Reviews.vue'
-import NavBar from './components/NavBar.vue'
+import BootstrapVue from 'bootstrap-vue'
+
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue/dist/bootstrap-vue.css'
 
 
-Vue.use(Router);
+
+Vue.use(BootstrapVue);
+Vue.use(VueRouter);
+
+
+const routes = [
+  {
+    path: '/venues',
+    name: 'venues',
+    component: Venues
+  },
+  {
+    path: '/reviews',
+    name: 'reviews',
+    component: Reviews
+  }
+];
+
+const router  =  new  VueRouter ({
+  routes : routes,
+  mode :  'history'
+});
 
 new Vue({
   el: '#app',
-  routes: [
-    {
-      path: '/venues',
-      name: 'venues',
-      component: Venues
-    },
-    {
-      path: '/reviews',
-      name: 'reviews',
-      component: Reviews
-    }
-  ],
+  router: router,
   render: h => h(App)
-});
-
-
-new Vue({
-  el: "#navbar",
-  router: Router,
-  render: h => h(NavBar)
 });

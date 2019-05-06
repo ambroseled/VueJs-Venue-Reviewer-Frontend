@@ -1,12 +1,12 @@
 <template>
-    <div>
-      <h2>Venue Reviewer</h2>
-      <nav>
-        <router-link :to="{name:'venues'}"><button>sadsadds</button></router-link>
-        <router-link :to="{name:'reviews'}">Reviews</router-link>
-        <button>noot</button>
-      </nav>
-    </div>
+  <b-navbar fixed="top" variant="primary" id="navbar">
+    <b-navbar-brand>VenueReviewer</b-navbar-brand>
+    <b-navbar-nav>
+      <b-nav-item class="whiteText" href="/venues">Venues</b-nav-item>
+      <b-nav-item href="/reviews">Reviews</b-nav-item>
+    </b-navbar-nav>
+
+  </b-navbar>
 </template>
 
 <script>

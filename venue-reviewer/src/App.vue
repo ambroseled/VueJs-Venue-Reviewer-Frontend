@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <NavBar></NavBar>
+    <router-view></router-view>
   </div>
 </template>
 
@@ -15,9 +15,6 @@ export default {
     return {
       msg: 'Welcome to Your Vue.js App'
     }
-  },
-  comments: {
-    'NavBar': NavBar
   }
 }
 </script>
