@@ -1,7 +1,5 @@
 <template>
   <div id="app">
-    <h1>Reeeeee</h1>
-  <router-link>nooot</router-link>
     <NavBar></NavBar>
   </div>
 </template>
