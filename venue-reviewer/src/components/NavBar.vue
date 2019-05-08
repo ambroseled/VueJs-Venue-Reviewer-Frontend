@@ -10,41 +10,96 @@
       <!--TODO error for login-->
       <!--TODO show logged in user-->
       <!-- When logged in -->
-      <!-- <div id="logid" v-if="!this.$cookie.get('authToken')"> -->
+      <!-- <div id="logId" v-if="!this.$cookie.get('authToken')"> -->
       <!-- When not logged in -->
       <!-- <div id="loggedIn" v-if="this.$cookie.get('authToken')"> -->
 
       <b-button v-b-modal.signInModal>Sign In</b-button>
+      <b-button v-b-modal.signUpModal>Sign Up</b-button>
+      <b-button>Log Out</b-button>
 
-      <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#signupModal">Sign Up
-      </button>
 
     </b-navbar-nav>
 
-    <b-modal id="signInModal" hide-footer title="Sign In">
+    <b-modal id="signUpModal" hide-footer title="Sign Up">
+      <a v-if="signUpErr">{{signUpErr}}</a>
       <form>
         <div class="col">
           <div class="row">
-            <input v-model="givenName" placeholder="First Name" type="text" required>
+            <form-group>
+              <input v-model="givenName" placeholder="First Name" type="text">
+              <a v-if="!$v.givenName.required">Required</a>
+            </form-group>
           </div>
           <div class="row">
-            <input v-model="familyName" placeholder="Family Name" type="text" required>
+            <form-group>
+              <input v-model="familyName" placeholder="Family Name" type="text">
+              <a v-if="!$v.familyName.required">Required</a>
+            </form-group>
           </div>
           <div class="row">
-            <input v-model="username" placeholder="Username" type="text" required>
+            <form-group>
+              <input v-model="username" placeholder="Username" type="text">
+              <a v-if="!$v.username.required">Required</a>
+              <!-- TODO Custom Validator to check for in use email/username-->
+              <a v-if="!$v.username.maxLength">Username must be under 64 characters</a>
+            </form-group>
           </div>
           <div class="row">
-            <input v-model="email" placeholder="Email Address" type="email" required>
+            <form-group>
+              <input v-model="email" placeholder="Email Address" type="email">
+              <a v-if="!$v.email.required">Required</a>
+              <a v-else-if="!$v.email.email">Invalid Email</a>
+            </form-group>
           </div>
           <div class="row">
-            <input v-model="password" placeholder="Password" type="password" required>
+            <form-group>
+              <input v-model="password" placeholder="Password" type="password">
+              <a v-if="!$v.password.required">Required</a>
+            </form-group>
           </div>
           <div class="row">
-            <input v-model="repeatPassword" placeholder="Repeat Password" type="password" required>
+            <form-group>
+              <input v-model="repeatPassword" placeholder="Confirm Password" type="password">
+              <a v-if="!$v.repeatPassword.required">Required</a>
+              <a v-else-if="!$v.repeatPassword.sameAsPassword">Passwords Must Match</a>
+            </form-group>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-secondary" data-dismiss="modal" data-target="#signupModal" v-on:click="signUp">Sign Up</button>
+        <button type="submit" class="btn btn-secondary" @click.prevent="signUp" :disabled="!($v.password.required &&
+        $v.email.required && $v.username.required && $v.email.email && $v.repeatPassword.required &&
+        $v.repeatPassword.sameAsPassword && $v.username.maxLength && $v.familyName.required &&
+        $v.givenName.required)">Sign Up</button>
+      </form>
+    </b-modal>
+
+    <b-modal id="signInModal" hide-footer title="Sign In">
+      <a v-if="signInErr">{{signInErr}}</a>
+      <form>
+        <div class="col">
+          <a>Sign in with username or email</a>
+          <div class="row">
+            <form-group>
+              <input v-model="signInUsername" placeholder="Username" type="text">
+              <a v-if="!$v.signInUsername.check">Required</a>
+            </form-group>
+          </div>
+          <div class="row">
+            <form-group>
+              <input v-model="signInEmail" placeholder="Email Address" type="email">
+              <a v-if="!$v.signInEmail.check">Required</a>
+            </form-group>
+          </div>
+          <div class="row">
+            <form-group>
+              <input v-model="password" placeholder="Password" type="password">
+              <a v-if="!$v.password.required">Required</a>
+            </form-group>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-secondary" @click.prevent="signIn" :disabled="!($v.password.required && ($v.signInEmail.check || $v.signInUsername.check))">Sign In</button>
       </form>
     </b-modal>
 
@@ -54,6 +109,7 @@
 
 <script>
     import * as router from "vue";
+    import { required, sameAs, maxLength, email } from 'vuelidate/lib/validators'
     export default {
         name: "NavBar",
       data() {
@@ -68,23 +124,15 @@
           token: "",
           userId: "",
           userToken: "",
-          signUpValid: "false"
+          signUpValid: "false",
+          signUpErr: "",
+          signInErr: "",
+          signInEmail: "",
+          signInUsername: ""
         }
       },
         methods: {
-          validateSignUpForm: function () {
-            if (this.givenName && this.familyName && this.username && this.email && this.password && this.repeatPassword) {
-              // TODO email validation on the regex given
-              if (this.password === this.repeatPassword && this.username.length <= 64) {
-                this.signUpValid = "true";
-                return;
-              }
-            }
-            this.signUpValid = "false";
-            return;
-          },
           signUp: function () {
-            alert("sign up function called " + this.username);
             this.$http.post("http://localhost:4941/api/v1/users", JSON.stringify({
               "username": this.username,
               "email": this.email,
@@ -96,13 +144,62 @@
                 'Content-Type': 'application/json'
               }
             }).then(function (res) {
-              //TODO log the user in unless that happens already in sign up
 
             }, function (error) {
-              //TODO handle errors to be displayed
+              this.signUpErr = error.statusText;
+            });
+          },
+          signIn: function () {
+            this.$http.post("http://localhost:4941/api/v1/users/login", JSON.stringify({
+              "username": this.signInUsername,
+              "email": this.signInEmail,
+              "password": this.password
+            }), {
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }).then(function (res) {
+
+
+            }, function (error) {
+              this.signUpErr = error.statusText;
             });
           }
+        },
+      validations: {
+          password: {
+            required
+          },
+        repeatPassword: {
+            required,
+            sameAsPassword: sameAs('password')
+        },
+        givenName: {
+            required
+        },
+        familyName: {
+            required
+        },
+        username: {
+            required,
+            maxLength: maxLength(64)
+        },
+        email: {
+            email,
+            required
+        },
+        signInUsername: {
+            check (v) {
+              return required(v) || this.signInEmail
+            }
+        },
+        signInEmail: {
+            email,
+          check (v) {
+              return required(v) || this.signInUsername
+          }
         }
+      }
     }
 </script>
 
