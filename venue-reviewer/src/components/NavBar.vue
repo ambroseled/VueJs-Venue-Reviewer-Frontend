@@ -23,10 +23,6 @@
           <b-button>Your Profile</b-button>
         </router-link>
         <b-button @click="signOut">Sign Out</b-button>
-
-
-        <b-button v-b-modal.signInModal>Sign In</b-button>
-        <b-button v-b-modal.signUpModal>Sign Up</b-button>
       </div>
 
     </b-navbar-nav>
@@ -174,7 +170,6 @@
                 'Content-Type': 'application/json'
               }
             }).then(function (response) {
-              alert(response.body.token);
               this.$cookies.set("auth_token", response.body.token);
               this.$cookies.set("auth_Id", response.body.userId);
               location.reload();

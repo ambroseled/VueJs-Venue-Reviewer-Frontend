@@ -68,7 +68,7 @@
         </div>
 
         <input type="file" @change="onFileChanged" accept="image/png, image/jpeg">
-        <b-button>Save</b-button>
+        <b-button @click.prevent="savePhoto">Save</b-button>
         <b-button>Cancel</b-button>
       </b-modal>
       
@@ -96,7 +96,8 @@
         currentPassword: "",
         selectedFile: null,
         image: null,
-        profilePicture: ""
+        profilePicture: "",
+        imageType: ""
       }
     },
     mounted: function () {
@@ -104,6 +105,7 @@
     },
     methods: {
       getProfile: function () {
+        this.$http.headers.common['X-Authorization'] = 'YXBpOnBhc3N3b3Jk';
         this.$http.get('http://localhost:4941/api/v1/users/' + this.$cookies.get("auth_Id"), {}, {
           headers: {
             'X-Authorization': this.$cookies.get('auth_token')
@@ -126,7 +128,8 @@
           "password": this.password
         }), {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-Authorization': this.$cookies.get('auth_token')
           }
         }).then(function (res) {
 
@@ -136,16 +139,24 @@
       },
       onFileChanged (event) {
         const file = event.target.files[0];
-        var image = new Image();
         var reader = new FileReader();
-
+        this.imageType = file.type;
         reader.onload = (e) => {
           this.image = e.target.result;
         };
         reader.readAsDataURL(file);
       },
-      onUpload() {
-        // upload file
+      savePhoto () {
+        this.$http.put("http://localhost:4941/api/v1/users/" +  this.$cookies.get("auth_Id") + "/photo", this.profilePicture, {
+          headers: {
+            'Content-Type': this.imageType,
+            'X-Authorization': this.$cookies.get('auth_token')
+          }
+        }).then(function (res) {
+
+        }, function (error) {
+          this.error = error.statusText;
+        });
       }
     },
     validations: {
