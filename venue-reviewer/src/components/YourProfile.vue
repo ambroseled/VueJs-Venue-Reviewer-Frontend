@@ -8,13 +8,14 @@
       </b-jumbotron>
     </div>
     <div>
+      <div v-if="this.profilePicture">
+        <b-img thumbnail fluid rounded="circle" :src="this.profilePicture" alt="Profile Photo Display Failed"></b-img>
+      </div>
+      <div v-else>
+        <!-- TODO show default image -->
+        <b-img thumbnail fluid rounded="circle" src="this.image" alt="Photo Display Failed"></b-img>
+      </div>
       <div v-if="this.$cookies.get('auth_Id') === this.$route.params.userId">
-        <div v-if="this.profilePicture">
-          <b-img thumbnail fluid rounded="circle" src="../assets/defaultProfilePic.jpg" alt="Profile Photo Display Failed"></b-img>
-        </div>
-        <div v-else>
-          <b-img thumbnail fluid rounded="circle" src="this.image" alt="Profile Photo Display Failed"></b-img>
-        </div>
         <ol>
           <li>Username: {{profile.username}}</li>
           <li v-if="profile.email">Email: {{profile.email}}</li>
@@ -60,11 +61,12 @@
       </b-modal>
 
       <b-modal id="profilePhotoModal" hide-footer title="Profile Photo">
-        <div v-if="this.image">
-          <b-img thumbnail fluid rounded="circle" :src="this.image" alt="Display Failed"></b-img>
+        <div v-if="this.profilePictureUpload">
+          <b-img thumbnail fluid rounded="circle" :src="this.profilePictureUpload" alt="Display Failed"></b-img>
         </div>
         <div v-else>
-          <b-img thumbnail fluid rounded="circle" src="../assets/defaultProfilePic.jpg" alt="Profile Photo Display Failed"></b-img>
+          <!-- TODO default image shown else if -->
+          <b-img thumbnail fluid rounded="circle" :src="this.profilePicture" alt="Profile Photo Display Failed"></b-img>
         </div>
 
         <input type="file" @change="onFileChanged" accept="image/png, image/jpeg">
@@ -96,12 +98,14 @@
         currentPassword: "",
         selectedFile: null,
         image: null,
-        profilePicture: "",
-        imageType: ""
+        profilePictureUpload: "",
+        imageType: "",
+        profilePicture: ""
       }
     },
     mounted: function () {
       this.getProfile();
+      this.getProfilePicture();
     },
     methods: {
       getProfile: function () {
@@ -142,12 +146,12 @@
         var reader = new FileReader();
         this.imageType = file.type;
         reader.onload = (e) => {
-          this.image = e.target.result;
+          this.profilePictureUpload = e.target.result;
         };
         reader.readAsDataURL(file);
       },
       savePhoto () {
-        this.$http.put("http://localhost:4941/api/v1/users/" +  this.$cookies.get("auth_Id") + "/photo", this.profilePicture, {
+        this.$http.put("http://localhost:4941/api/v1/users/" +  this.$cookies.get("auth_Id") + "/photo", this.profilePictureUpload, {
           headers: {
             'Content-Type': this.imageType,
             'X-Authorization': this.$cookies.get('auth_token')
@@ -157,6 +161,15 @@
         }, function (error) {
           this.error = error.statusText;
         });
+      },
+      getProfilePicture () {
+        this.$http.get('http://localhost:4941/api/v1/users/' + this.$cookies.get("auth_Id") + "/photo")
+          .then(function (response) {
+            console.log(response.data.image);
+            this.profilePicture = response.body;
+          }, function (error) {
+            this.error = error;
+          });
       }
     },
     validations: {
