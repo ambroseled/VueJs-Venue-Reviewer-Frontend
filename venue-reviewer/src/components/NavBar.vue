@@ -109,7 +109,8 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-secondary" @click.prevent="signIn" :disabled="!($v.password.required && ($v.signInEmail.check || $v.signInUsername.check))">Sign In</button>
+        <button type="submit" class="btn btn-secondary" @click.prevent="signIn" :disabled="!($v.password.required &&
+        ($v.signInEmail.check || $v.signInUsername.check))">Sign In</button>
       </form>
     </b-modal>
 
