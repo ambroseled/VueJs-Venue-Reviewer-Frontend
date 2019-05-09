@@ -2,8 +2,8 @@
   <b-navbar fixed="top" variant="primary" id="navbar">
     <b-navbar-brand>VenueReviewer</b-navbar-brand>
     <b-navbar-nav>
-      <b-nav-item class="whiteText" href="/venues">Venues</b-nav-item>
-      <b-nav-item href="/reviews">Reviews</b-nav-item>
+      <b-nav-item href="/venues">Venues</b-nav-item>
+      <b-nav-item href="/profiles">Profiles</b-nav-item>
     </b-navbar-nav>
 
     <b-navbar-nav class="ml-auto">
@@ -14,10 +14,20 @@
       <!-- When not logged in -->
       <!-- <div id="loggedIn" v-if="this.$cookie.get('authToken')"> -->
 
-      <b-button v-b-modal.signInModal>Sign In</b-button>
-      <b-button v-b-modal.signUpModal>Sign Up</b-button>
-      <b-button>Log Out</b-button>
+      <div v-if="!this.$cookies.get('auth_token')">
+        <b-button v-b-modal.signInModal>Sign In</b-button>
+        <b-button v-b-modal.signUpModal>Sign Up</b-button>
+      </div>
+      <div v-else>
+        <router-link :to="{name: 'profile', params: { userId: this.$cookies.get('auth_Id')}}">
+          <b-button>Your Profile</b-button>
+        </router-link>
+        <b-button @click="signOut">Sign Out</b-button>
 
+
+        <b-button v-b-modal.signInModal>Sign In</b-button>
+        <b-button v-b-modal.signUpModal>Sign Up</b-button>
+      </div>
 
     </b-navbar-nav>
 
@@ -127,12 +137,14 @@
           signUpValid: "false",
           signUpErr: "",
           signInErr: "",
+          signOutErr: "",
           signInEmail: "",
           signInUsername: ""
         }
       },
         methods: {
           signUp: function () {
+            this.signUpErr = null;
             this.$http.post("http://localhost:4941/api/v1/users", JSON.stringify({
               "username": this.username,
               "email": this.email,
@@ -144,12 +156,14 @@
                 'Content-Type': 'application/json'
               }
             }).then(function (res) {
-
+              this.signInEmail = this.email;
+              this.signIn();
             }, function (error) {
               this.signUpErr = error.statusText;
             });
           },
           signIn: function () {
+            this.signInErr = null;
             this.$http.post("http://localhost:4941/api/v1/users/login", JSON.stringify({
               "username": this.signInUsername,
               "email": this.signInEmail,
@@ -158,12 +172,28 @@
               headers: {
                 'Content-Type': 'application/json'
               }
-            }).then(function (res) {
-
-
+            }).then(function (response) {
+              alert(response.body.token);
+              this.$cookies.set("auth_token", response.body.token);
+              this.$cookies.set("auth_Id", response.body.userId);
+              location.reload();
             }, function (error) {
-              this.signUpErr = error.statusText;
+              this.signInErr = error.statusText;
             });
+          },
+          signOut: function () {
+            this.$http.post('http://localhost:4941/api/v1/users/logout', {}, {
+              headers: {
+                'X-Authorization': this.$cookies.get('auth_token')
+              }
+            })
+              .then(function (response) {
+                this.$cookies.remove("auth_Id");
+                this.$cookies.remove("auth_token");
+                location.reload();
+              }, function (error) {
+                this.signOutErr = error;
+              });
           }
         },
       validations: {

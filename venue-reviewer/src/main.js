@@ -2,7 +2,8 @@ import Vue from 'vue'
 import App from './App.vue'
 import VueRouter from 'vue-router'
 import Venues from './components/Venues.vue'
-import Reviews from './components/Reviews.vue'
+import Profiles from './components/Profiles.vue'
+import YourProfile from './components/YourProfile.vue'
 import BootstrapVue from 'bootstrap-vue'
 import VueResource from 'vue-resource'
 import Vuelidate from 'vuelidate'
@@ -25,9 +26,14 @@ const routes = [
     component: Venues
   },
   {
-    path: '/reviews',
-    name: 'reviews',
-    component: Reviews
+    path: '/profiles',
+    name: 'profiles',
+    component: Profiles
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: YourProfile
   }
 ];
 
