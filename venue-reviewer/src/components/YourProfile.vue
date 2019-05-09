@@ -9,6 +9,12 @@
     </div>
     <div>
       <div v-if="this.$cookies.get('auth_Id') === this.$route.params.userId">
+        <div v-if="this.profilePicture">
+          <b-img thumbnail fluid rounded="circle" src="../assets/defaultProfilePic.jpg" alt="Profile Photo Display Failed"></b-img>
+        </div>
+        <div v-else>
+          <b-img thumbnail fluid rounded="circle" src="this.image" alt="Profile Photo Display Failed"></b-img>
+        </div>
         <ol>
           <li>Username: {{profile.username}}</li>
           <li v-if="profile.email">Email: {{profile.email}}</li>
@@ -58,7 +64,7 @@
           <b-img thumbnail fluid rounded="circle" :src="this.image" alt="Display Failed"></b-img>
         </div>
         <div v-else>
-          <h2>Please Upload a Profile Picture</h2>
+          <b-img thumbnail fluid rounded="circle" src="../assets/defaultProfilePic.jpg" alt="Profile Photo Display Failed"></b-img>
         </div>
 
         <input type="file" @change="onFileChanged" accept="image/png, image/jpeg">
@@ -89,7 +95,8 @@
         password: "",
         currentPassword: "",
         selectedFile: null,
-        image: null
+        image: null,
+        profilePicture: ""
       }
     },
     mounted: function () {
