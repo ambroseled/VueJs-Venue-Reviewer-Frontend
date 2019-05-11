@@ -1,5 +1,5 @@
 <template>
-  <div id="venues">
+  <div id="users">
     <NavBar></NavBar>
     <div>
       <b-jumbotron id="jumbotron" header="Your Profile">

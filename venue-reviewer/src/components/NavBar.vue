@@ -3,7 +3,7 @@
     <b-navbar-brand>VenueReviewer</b-navbar-brand>
     <b-navbar-nav>
       <b-nav-item href="/venues">Venues</b-nav-item>
-      <b-nav-item href="/profiles">Profiles</b-nav-item>
+      <b-nav-item href="/users">Users</b-nav-item>
     </b-navbar-nav>
 
     <b-navbar-nav class="ml-auto">
@@ -19,7 +19,7 @@
         <b-button v-b-modal.signUpModal>Sign Up</b-button>
       </div>
       <div v-else>
-        <router-link :to="{name: 'profile', params: { userId: this.$cookies.get('auth_Id')}}">
+        <router-link :to="{name: 'user', params: { userId: this.$cookies.get('auth_Id')}}">
           <b-button>Your Profile</b-button>
         </router-link>
         <b-button @click="signOut">Sign Out</b-button>
@@ -109,8 +109,6 @@
         ($v.signInEmail.check || $v.signInUsername.check))">Sign In</button>
       </form>
     </b-modal>
-
-
   </b-navbar>
 </template>
 
@@ -136,7 +134,17 @@
           signInErr: "",
           signOutErr: "",
           signInEmail: "",
-          signInUsername: ""
+          signInUsername: "",
+          costRatings: [
+            {"text": "Free", "value": 0},
+            {"text": "$", "value": 1},
+            {"text": "$$", "value": 2},
+            {"text": "$$$", "value": 3},
+            {"text": "$$$$", "value": 4}
+          ],
+          reviewBody: "",
+          starRating: "",
+          costRating: ""
         }
       },
         methods: {
@@ -173,6 +181,7 @@
               this.$cookies.set("auth_token", response.body.token);
               this.$cookies.set("auth_Id", response.body.userId);
               location.reload();
+              this.getVenuesToSelect();
             }, function (error) {
               this.signInErr = error.statusText;
             });
