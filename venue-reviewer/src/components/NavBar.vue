@@ -7,13 +7,6 @@
     </b-navbar-nav>
 
     <b-navbar-nav class="ml-auto">
-      <!--TODO error for login-->
-      <!--TODO show logged in user-->
-      <!-- When logged in -->
-      <!-- <div id="logId" v-if="!this.$cookie.get('authToken')"> -->
-      <!-- When not logged in -->
-      <!-- <div id="loggedIn" v-if="this.$cookie.get('authToken')"> -->
-
       <div v-if="!this.$cookies.get('auth_token')">
         <b-button v-b-modal.signInModal>Sign In</b-button>
         <b-button v-b-modal.signUpModal>Sign Up</b-button>
@@ -24,7 +17,6 @@
         </router-link>
         <b-button @click="signOut">Sign Out</b-button>
       </div>
-
     </b-navbar-nav>
 
     <b-modal id="signUpModal" hide-footer title="Sign Up">

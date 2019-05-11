@@ -17,6 +17,24 @@
   export default {
     name: "Users",
     components: {NavBar},
+    data() {
+      return {
+        users: []
+      }
+    },
+    mounted() {
+      this.getUsers();
+    },
+    methods: {
+      getUsers: function () {
+        this.$http.get('http://localhost:4941/api/v1/users')
+          .then(function (response) {
+            this.users = response.data;
+          }, function (error) {
+            console.log(error);
+          });
+      }
+    }
   }
 </script>
 

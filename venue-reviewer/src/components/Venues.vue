@@ -3,43 +3,51 @@
     <NavBar></NavBar>
     <div>
       <b-jumbotron id="jumbotron" header="Venues" lead="Explore Venues in the System">
-        <b-button variant="primary">Add Venue</b-button>
       </b-jumbotron>
-      <b-button variant="primary" v-b-modal.reviewModal>Post Review</b-button>
+      <div v-if="this.$cookies.get('auth_token')">
+        <b-button variant="primary" v-b-modal.createVenueModal>Add Venue</b-button>
+        <b-button variant="primary" v-b-modal.reviewModal>Post Review</b-button>
+      </div>
       <div class="row">
         <div class="col">
           <b-form-group
-            label="Select a City">
+            label="Select a City"
+            name="city">
             <b-form-select v-model="selected" :options="cities" size="sm"></b-form-select>
           </b-form-group>
         </div>
         <div class="col">
           <b-form-group
-            label="Enter a Venue Name">
+            label="Enter a Venue Name"
+            name="venueName">
             <b-input v-model="search"></b-input>
           </b-form-group>
         </div>
         <div class="col">
           <b-form-group
-            label="Select a Category">
+            label="Select a Category"
+            name="category">
             <b-form-select v-model="category" :options="categories" size="sm"></b-form-select>
           </b-form-group>
         </div>
         <div class="col">
           <b-form-group
-            label="Sort by Rating">
+            label="Sort by Rating"
+            name="sortBy">
             <b-form-select v-model="sortOption" :options="sorting" size="sm"></b-form-select>
           </b-form-group>
         </div>
         <div class="col">
           <b-form-group
-            label="Minimum Star Rating">
+            label="Minimum Star Rating"
+            name="minStarRating">
             <b-input type="number" min="1" max="5" v-model="minStar"></b-input>
           </b-form-group>
         </div>
         <div class="col">
           <b-form-group
-            label="Max Cost Rating">
+            label="Max Cost Rating"
+            name="maxCostRating">
             <b-form-select v-model="maxCost" :options="costRatings" size="sm"></b-form-select>
           </b-form-group>
         </div>
@@ -54,19 +62,30 @@
               <b-img fluid src="https://picsum.photos/id/1025/4951/3301" alt="Profile Photo Display Failed"></b-img>
               <h5>{{venue.shortDescription}}</h5>
               <div class="row">
-              <a>City: {{venue.city}}</a>
+                <a>City: {{venue.city}}</a>
               </div>
               <div class="row">
-              <a>Category: {{venue.categoryId}}</a>
+                <a>Category: {{venue.categoryId}}</a>
+              </div>
+              <div v-if="venue.meanStarRating" class="row">
+                <a>Mean Star Rating: {{venue.meanStarRating}}</a>
+              </div>
+              <div v-else class="row">
+                <a>Mean Star Rating: 3</a>
+              </div>
+              <div class="row" v-if="venue.modeCostRating">
+                <a>Mode Cost Rating: {{venue.modeCostRating}}</a>
+              </div>
+              <div v-else class="row">
+                <a>Mode Cost Rating: 0</a>
               </div>
               <div class="row">
-              <a>Mean Star Rating: {{venue.meanStarRating}}</a>
-              </div>
-              <div class="row">
-              <a>Mode Cost Rating: {{venue.modeCostRating}}</a>
-              </div>
-              <div class="row">
-                <b-button @click.prevent="setVenue(venue)">View Details</b-button>
+                <div class="col">
+                  <b-button @click.prevent="setVenue(venue)">View Details</b-button>
+                </div>
+                <div class="col">
+                  <b-button @click.prevent="editVenue(venue)">Edit Details</b-button>
+                </div>
               </div>
             </b-card-body>
           </b-card>
@@ -125,7 +144,7 @@
                 style="text-shadow: 1px 1px 2px #333;"
               >
                 <div v-for="review in reviews">
-                  <b-carousel-slide img-blank img-alt="Blank image" style="height: 30vh; color: black">
+                  <b-carousel-slide img-blank img-alt="Blank image" style="height: 30vh;">
                     <div class="row">
                       <h4>{{review.reviewBody}}</h4>
                     </div>
@@ -150,37 +169,137 @@
       </b-modal>
 
     </div>
+
     <b-modal id="reviewModal" hide-footer title="Post Review">
       <form>
         <div class="col">
+          <div v-if="this.reviewError" class="col">
+            <a>{{reviewError}}</a>
+          </div>
           <div class="col">
             <b-form-group
-              label="Select Venue">
+              label="Select Venue"
+              name="reviewVenue">
               <b-form-select v-model="reviewVenue" :options="venuesToSelect" size="sm"></b-form-select>
-              <a v-if="!$v.reviewVenue.check">Required</a>
+              <a v-if="!$v.reviewVenue.required">Required</a>
             </b-form-group>
           </div>
           <div class="col">
             <b-form-group
-              label="Star Rating">
+              label="Star Rating"
+              name="starRating">
               <b-input type="number" min="1" max="5" v-model="starRating"></b-input>
+              <a v-if="!$v.starRating.required">Required</a>
             </b-form-group>
           </div>
           <div class="col">
             <b-form-group
-              label="Cost Rating">
+              label="Cost Rating"
+              name="costRating">
               <b-form-select v-model="costRating" :options="costRatings" size="sm"></b-form-select>
+              <a v-if="!$v.costRating.required">Required</a>
             </b-form-group>
           </div>
           <div class="col">
             <b-form-group
-              label="Review Body">
-              <textarea class="form-control" rows="3" v-model="reviewBody"></textarea>
-              <a v-if="!$v.reviewBody.check">Required</a>
+              label="Review Body"
+              name="reviewBodyText">
+              <b-input type="text" v-model="reviewBody"></b-input>
+              <a v-if="!$v.reviewBody.required">Required</a>
             </b-form-group>
           </div>
           <div class="col">
-            <b-button type="submit" @click.prevent="postReview">Post Review</b-button>
+            <b-button type="submit" @click.prevent="postReview" :disabled="!($v.starRating.required &&
+              $v.costRating.required && $v.reviewVenue.required && $v.reviewBody.required)">Post Review</b-button>
+          </div>
+        </div>
+      </form>
+    </b-modal>
+
+    <b-modal id="createVenueModal" hide-footer title="Add Venue">
+      <form>
+        <div class="col">
+          <div v-if="this.venueError" class="col">
+            <a>{{venueError}}</a>
+          </div>
+          <div class="row">
+            <div class="col">
+              <b-form-group
+                label="Venue Name"
+                name="venueName">
+                <b-input type="text" v-model="venueName"></b-input>
+                <a v-if="!$v.venueName.required">Required</a>
+              </b-form-group>
+            </div>
+            <div class="col">
+              <b-form-group
+                label="Short Description"
+                name="shortDescription">
+                <b-input type="text" v-model="shortDescription"></b-input>
+                <a v-if="!$v.shortDescription.required">Required</a>
+              </b-form-group>
+            </div>
+          </div>
+          <div class="col">
+            <b-form-group
+              label="Select a Category"
+              name="venueCategory">
+              <b-form-select v-model="venueCategory" :options="categories" size="sm"></b-form-select>
+              <a v-if="!$v.venueCategory.required">Required</a>
+            </b-form-group>
+          </div>
+          <div class="col">
+            <b-form-group
+              label="Long Description"
+              name="longDescription">
+              <b-input type="text" v-model="longDescription"></b-input>
+              <a v-if="!$v.longDescription.required">Required</a>
+            </b-form-group>
+          </div>
+          <div class="row">
+            <div class="col">
+              <b-form-group
+                label="City"
+                name="venueCity">
+                <b-input type="text" v-model="venueCity"></b-input>
+                <a v-if="!$v.venueCity.required">Required</a>
+              </b-form-group>
+            </div>
+            <div class="col">
+              <b-form-group
+                label="Address"
+                name="venueAddress">
+                <b-input type="text" v-model="venueAddress"></b-input>
+                <a v-if="!$v.venueAddress.required">Required</a>
+              </b-form-group>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <b-form-group
+                label="Latitude"
+                name="latitude">
+                <b-input type="number" v-model="latitude"></b-input>
+                <a v-if="!$v.latitude.required">Required</a>
+                <a v-if="!$v.latitude.minValue || !$v.latitude.maxValue">Latitude must be between (-90, 90)</a>
+              </b-form-group>
+            </div>
+            <div class="col">
+              <b-form-group
+                label="Longitude"
+                name="longitude">
+                <b-input type="number" v-model="longitude" min="-90" max="90"></b-input>
+                <a v-if="!$v.longitude.required">Required</a>
+                <a v-if="!$v.longitude.minValue || !$v.longitude.maxValue">Longitude must be between (-90, 90)</a>
+              </b-form-group>
+            </div>
+          </div>
+          <div class="col">
+            <b-button type="submit" @click.prevent="postVenue" :disabled="!($v.venueName.required &&
+              $v.shortDescription.required && $v.venueCategory.required && $v.longDescription.required &&
+              $v.venueCity.required && $v.venueAddress.required && $v.latitude.required && $v.longitude.required &&
+              $v.latitude.minValue && $v.latitude.maxValue && $v.longitude.minValue && $v.longitude.maxValue)"
+            >Add Venue</b-button>
           </div>
         </div>
       </form>
@@ -191,7 +310,7 @@
 
 <script>
   import NavBar from './NavBar'
-  import {required} from 'vuelidate/lib/validators'
+  import {required, minValue, maxValue} from 'vuelidate/lib/validators'
   export default {
     name: "Venues",
     components: {NavBar},
@@ -203,14 +322,14 @@
         search: null,
         categories: [],
         category: null,
-        sortOption: null,
+        sortOption: "high - low star rating",
         sorting: ["high - low star rating",
             "low - high star rating",
           "high - low cost rating",
           "low - high cost rating"
         ],
         minStar: null,
-        maxCost: null,
+        maxCost: 0,
         costRatings: [
           {"text": "Free", "value": 0},
           {"text": "$", "value": 1},
@@ -229,9 +348,19 @@
         reviews: [],
         venuesToSelect: [],
         reviewVenue: "",
-        costRating: "",
-        starRating: "",
-        reviewBody: ""
+        costRating: 0,
+        starRating: 1,
+        reviewBody: "",
+        reviewError: "",
+        venueError: "",
+        venueCategory: "",
+        venueName: "",
+        shortDescription: "",
+        longDescription: "",
+        venueCity: "",
+        latitude: "",
+        longitude: "",
+        venueAddress: ""
       }
     },
     mounted() {
@@ -243,10 +372,11 @@
         this.$http.get('http://localhost:4941/api/v1/venues')
           .then(function (response) {
             this.venuesData = response.data;
+            this.venuesToSelect = [];
             for (var i = 0; i < response.data.length; i++) {
               this.venuesToSelect.push({"text": response.data[i].venueName, "value": response.data[i].venueId});
             }
-            console.log(this.venuesToSelect);
+            this.reviewVenue = response.data[0].venueId;
             this.setCities();
           }, function (error) {
             console.log(error);
@@ -282,7 +412,7 @@
                   "text": row.categoryName
                 });
              }
-            this.categories.push({"value": null, "text": "Select a Category"});
+            //this.categories.push({"value": null, "text": "Select a Category"});
           }, function (error) {
             console.log(error);
           });
@@ -395,27 +525,104 @@
           });
       },
       postReview: function () {
-        this.$http.post("http://localhost:4941/api/v1/venues/" + this.reviewVenue + "/reviews", JSON.stringify({
-          "reviewBody": this.reviewBody,
-          "starRating": parseInt(this.starRating, 10),
-          "costRating": this.costRating
+        this.reviewError = null;
+        if (!this.reviewVenue) {
+          this.reviewError = "Venue is required"
+        }
+        if (!this.starRating) {
+          this.reviewError = "Star Rating is required"
+        }
+        if (!this.costRating) {
+          this.reviewError = "Cost Rating is required"
+        }
+        if (!this.reviewBody) {
+          this.reviewError = "Review Body is required"
+        }
+        if (!this.reviewError) {
+          this.$http.post("http://localhost:4941/api/v1/venues/" + this.reviewVenue + "/reviews", JSON.stringify({
+            "reviewBody": this.reviewBody,
+            "starRating": parseInt(this.starRating, 10),
+            "costRating": this.costRating
+          }), {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Authorization': this.$cookies.get('auth_token')
+            }
+          }).then(function (res) {
+            this.$bvModal.hide("reviewModal")
+          }, function (error) {
+            if (error.statusText === "Forbidden: cannot post a review on your own venue") {
+              this.reviewError = "You cannot post a review on your own venue"
+            } else if (error.statusText === "Forbidden: cannot post more than one review for the same venue") {
+              this.reviewError = "You cannot post a review for a venue you have already reviewed"
+            } else {
+              this.reviewError = error.statusText;
+            }
+          });
+        }
+      },
+      postVenue: function () {
+        this.$http.post("http://localhost:4941/api/v1/venues", JSON.stringify({
+          "venueName": this.venueName,
+          "categoryId": this.venueCategory,
+          "city": this.venueCity,
+          "shortDescription": this.shortDescription,
+          "longDescription": this.longDescription,
+          "address": this.venueAddress,
+          "latitude": parseFloat(this.latitude),
+          "longitude": parseFloat(this.longitude)
         }), {
           headers: {
             'Content-Type': 'application/json',
             'X-Authorization': this.$cookies.get('auth_token')
           }
         }).then(function (res) {
-
+          this.getVenues();
+          this.$bvModal.hide("createVenueModal")
         }, function (error) {
-          this.signUpErr = error.statusText;
+          this.venueError = error.statusText;
         });
       }
     },
     validations: {
-      reviewVenue: {
+      venueName: {
+        required
+      },
+      shortDescription: {
+        required
+      },
+      venueCategory: {
+        required
+      },
+      longDescription: {
+        required
+      },
+      venueAddress: {
+        required
+      },
+      latitude: {
+        required,
+        minValue: minValue(-90),
+        maxValue: maxValue(90)
+      },
+      longitude: {
+        required,
+        minValue: minValue(-180),
+        maxValue: maxValue(180)
+      },
+      venueCity: {
+        required
+      },
+      starRating: {
+        required
+      },
+      costRating: {
         required
       },
       reviewBody: {
+        required
+      },
+      reviewVenue: {
         required
       }
     }
