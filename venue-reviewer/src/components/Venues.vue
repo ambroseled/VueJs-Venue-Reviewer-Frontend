@@ -149,7 +149,7 @@
             </b-tab>
             <b-tab title="Reviews">
               <b-carousel
-                id="carousel-1"
+                id="carousel-2"
                 v-model="slide"
                 :interval="0"
                 img-height="480"
@@ -430,7 +430,9 @@
         sorting: ["high - low star rating",
             "low - high star rating",
           "high - low cost rating",
-          "low - high cost rating"
+          "low - high cost rating",
+          "closet - furthest distance",
+          "furthest - closet distance"
         ],
         minStar: null,
         maxCost: 0,
@@ -464,7 +466,9 @@
         venueCity: "",
         latitude: "",
         longitude: "",
-        venueAddress: ""
+        venueAddress: "",
+        myLatitude: null,
+        myLongitude: null
       }
     },
     mounted() {
@@ -547,9 +551,9 @@
             url += "&categoryId=" + this.category;
           }
         }
+        let value = "STAR_RATING";
+        let order = "false";
         if (this.sortOption) {
-          let value = "STAR_RATING";
-          let order = "false";
           if (this.sortOption === "high - low star rating") {
             value = "STAR_RATING";
             order = "false";
@@ -562,6 +566,12 @@
           } else if (this.sortOption === "low - high cost rating") {
             value = "COST_RATING";
             order = "false";
+          } else if (this.sortOption === "closet - furthest distance") {
+            value = "DISTANCE";
+            order = "false";
+          } else if (this.sortOption === "furthest - closet distance") {
+            value = "DISTANCE";
+            order = "true";
           }
           if (!first) {
             url += "?sortBy=" + value + "&reverseSort=" + order;
@@ -586,12 +596,28 @@
             url += "&maxCostRating=" + this.maxCost;
           }
         }
-        this.$http.get(url)
-          .then(function (response) {
-            this.venuesData = response.data;
-          }, function (error) {
-            console.log(error);
-          });
+        if (value === "DISTANCE") {
+          this.$getLocation()
+            .then(coordinates => {
+              url += "?myLatitude=" + coordinates.latitude;
+              url += "?myLatitude=" + coordinates.longitude;
+            }).then(
+            this.$http.get(url)
+              .then(function (response) {
+                this.venuesData = response.data;
+              }, function (error) {
+                console.log(error);
+              })
+          )
+        } else {
+          this.$http.get(url)
+            .then(function (response) {
+              this.venuesData = response.data;
+            }, function (error) {
+              console.log(error);
+            });
+        }
+
       },
       setVenue: function (venue, isEdit) {
         this.clearVenue();
