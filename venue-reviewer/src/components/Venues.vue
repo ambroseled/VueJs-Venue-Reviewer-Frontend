@@ -82,6 +82,9 @@
               <div v-else class="row">
                 <a>Mode Cost Rating: 0</a>
               </div>
+              <div v-if="venue.distance" class="row">
+                <a>Distance: {{venue.distance}}</a>
+              </div>
               <div class="row">
                 <div class="col">
                   <b-button @click.prevent="setVenue(venue, 0)">View Details</b-button>
@@ -468,12 +471,18 @@
         longitude: "",
         venueAddress: "",
         myLatitude: null,
-        myLongitude: null
+        myLongitude: null,
+        coords: null
       }
     },
     mounted() {
       this.getVenues();
       this.setCategories();
+      this.$getLocation()
+        .then(coordinates => {
+          this.myLatitude = coordinates.lat;
+          this.myLongitude = coordinates.lng;
+        });
     },
     methods: {
       getVenues: function () {
@@ -551,9 +560,9 @@
             url += "&categoryId=" + this.category;
           }
         }
-        let value = "STAR_RATING";
-        let order = "false";
         if (this.sortOption) {
+          let value = "STAR_RATING";
+          let order = "false";
           if (this.sortOption === "high - low star rating") {
             value = "STAR_RATING";
             order = "false";
@@ -579,6 +588,10 @@
           } else {
             url += "&sortBy=" + value + "&reverseSort=" + order;
           }
+          if (value === "DISTANCE") {
+            url += "&myLatitude=" + this.myLatitude;
+            url += "&myLongitude=" + this.myLongitude;
+          }
         }
         if (this.minStar) {
           if (!first) {
@@ -596,27 +609,14 @@
             url += "&maxCostRating=" + this.maxCost;
           }
         }
-        if (value === "DISTANCE") {
-          this.$getLocation()
-            .then(coordinates => {
-              url += "?myLatitude=" + coordinates.latitude;
-              url += "?myLatitude=" + coordinates.longitude;
-            }).then(
-            this.$http.get(url)
-              .then(function (response) {
-                this.venuesData = response.data;
-              }, function (error) {
-                console.log(error);
-              })
-          )
-        } else {
-          this.$http.get(url)
-            .then(function (response) {
-              this.venuesData = response.data;
-            }, function (error) {
-              console.log(error);
-            });
-        }
+        this.$http.get(url)
+          .then(function (response) {
+            this.venuesData = response.data;
+            console.log(response.data);
+          }, function (error) {
+            console.log(error);
+          });
+
 
       },
       setVenue: function (venue, isEdit) {

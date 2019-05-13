@@ -18,9 +18,16 @@
       <div v-if="this.$cookies.get('auth_Id') === this.$route.params.userId">
         <ol>
           <li>Username: {{profile.username}}</li>
-          <li v-if="profile.email">Email: {{profile.email}}</li>
+          <li>Email: {{profile.email}}</li>
           <li>Given Name: {{profile.givenName}}</li>
           <li>Family Name: {{profile.familyName}}</li>
+        </ol>
+      </div>
+      <div v-else>
+        <ol>
+        <li>Username: {{profile.username}}</li>
+        <li>Given Name: {{profile.givenName}}</li>
+        <li>Family Name: {{profile.familyName}}</li>
         </ol>
       </div>
 

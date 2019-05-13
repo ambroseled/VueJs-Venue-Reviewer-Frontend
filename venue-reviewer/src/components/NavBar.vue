@@ -156,7 +156,12 @@
               this.signInEmail = this.email;
               this.signIn();
             }, function (error) {
-              this.signUpErr = error.statusText;
+              if (error.statusText === "Bad Request: username or email already in use") {
+                this.signUpErr = "username or email already in use";
+              } else {
+                this.signUpErr = error.statusText;
+              }
+
             });
           },
           signIn: function () {
