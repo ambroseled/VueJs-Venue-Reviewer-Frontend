@@ -8,7 +8,7 @@ import BootstrapVue from 'bootstrap-vue'
 import VueResource from 'vue-resource'
 import Vuelidate from 'vuelidate'
 import VueCookies from "vue-cookies"
-
+import VueBrowserGeolocation from "vue-browser-geolocation"
 
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
@@ -18,7 +18,7 @@ Vue.use(VueResource);
 Vue.use(BootstrapVue);
 Vue.use(VueRouter);
 Vue.use(VueCookies);
-
+Vue.use(VueBrowserGeolocation);
 
 
 const routes = [

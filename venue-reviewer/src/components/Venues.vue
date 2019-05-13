@@ -54,6 +54,9 @@
       </div>
       <b-button variant="primary" @click.prevent="filterVenues">Filter Venues</b-button>
       <b-button variant="primary" @click.prevent="getVenues">Clear Search</b-button>
+      <div v-if="this.$cookies.get('auth_token')">
+        <b-button variant="primary" @click.prevent="getUserVenues">Your Venues Only</b-button>
+      </div>
       <div class="row">
         <div v-for="venue in venuesData" class="w-25">
           <b-card
@@ -81,10 +84,10 @@
               </div>
               <div class="row">
                 <div class="col">
-                  <b-button @click.prevent="setVenue(venue)">View Details</b-button>
+                  <b-button @click.prevent="setVenue(venue, 0)">View Details</b-button>
                 </div>
-                <div class="col">
-                  <b-button @click.prevent="editVenue(venue)">Edit Details</b-button>
+                <div v-if="checkAdmin(venue.venueId)" class="col">
+                  <b-button @click.prevent="setVenue(venue, 1)">Edit Details</b-button>
                 </div>
               </div>
             </b-card-body>
@@ -131,7 +134,19 @@
                 <b-link @click.prevent="showDesc"> Toggle Long Description</b-link>
               </div>
             </b-tab>
-            <b-tab title="Photos"></b-tab>
+            <b-tab title="Photos">
+              <b-carousel
+                id="carousel-1"
+                v-model="slide"
+                :interval="0"
+                img-height="480"
+                controls
+                indicators
+                background="#D3D3D3"
+                style="text-shadow: 1px 1px 2px #333;">
+
+              </b-carousel>
+            </b-tab>
             <b-tab title="Reviews">
               <b-carousel
                 id="carousel-1"
@@ -217,6 +232,95 @@
     </b-modal>
 
     <b-modal id="createVenueModal" hide-footer title="Add Venue">
+      <form>
+        <div class="col">
+          <div v-if="this.venueError" class="col">
+            <a>{{venueError}}</a>
+          </div>
+          <div class="row">
+            <div class="col">
+              <b-form-group
+                label="Venue Name"
+                name="venueName">
+                <b-input type="text" v-model="venueName"></b-input>
+                <a v-if="!$v.venueName.required">Required</a>
+              </b-form-group>
+            </div>
+            <div class="col">
+              <b-form-group
+                label="Short Description"
+                name="shortDescription">
+                <b-input type="text" v-model="shortDescription"></b-input>
+                <a v-if="!$v.shortDescription.required">Required</a>
+              </b-form-group>
+            </div>
+          </div>
+          <div class="col">
+            <b-form-group
+              label="Select a Category"
+              name="venueCategory">
+              <b-form-select v-model="venueCategory" :options="categories" size="sm"></b-form-select>
+              <a v-if="!$v.venueCategory.required">Required</a>
+            </b-form-group>
+          </div>
+          <div class="col">
+            <b-form-group
+              label="Long Description"
+              name="longDescription">
+              <b-input type="text" v-model="longDescription"></b-input>
+              <a v-if="!$v.longDescription.required">Required</a>
+            </b-form-group>
+          </div>
+          <div class="row">
+            <div class="col">
+              <b-form-group
+                label="City"
+                name="venueCity">
+                <b-input type="text" v-model="venueCity"></b-input>
+                <a v-if="!$v.venueCity.required">Required</a>
+              </b-form-group>
+            </div>
+            <div class="col">
+              <b-form-group
+                label="Address"
+                name="venueAddress">
+                <b-input type="text" v-model="venueAddress"></b-input>
+                <a v-if="!$v.venueAddress.required">Required</a>
+              </b-form-group>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <b-form-group
+                label="Latitude"
+                name="latitude">
+                <b-input type="number" v-model="latitude"></b-input>
+                <a v-if="!$v.latitude.required">Required</a>
+                <a v-if="!$v.latitude.minValue || !$v.latitude.maxValue">Latitude must be between (-90, 90)</a>
+              </b-form-group>
+            </div>
+            <div class="col">
+              <b-form-group
+                label="Longitude"
+                name="longitude">
+                <b-input type="number" v-model="longitude" min="-90" max="90"></b-input>
+                <a v-if="!$v.longitude.required">Required</a>
+                <a v-if="!$v.longitude.minValue || !$v.longitude.maxValue">Longitude must be between (-90, 90)</a>
+              </b-form-group>
+            </div>
+          </div>
+          <div class="col">
+            <b-button type="submit" @click.prevent="postVenue" :disabled="!($v.venueName.required &&
+              $v.shortDescription.required && $v.venueCategory.required && $v.longDescription.required &&
+              $v.venueCity.required && $v.venueAddress.required && $v.latitude.required && $v.longitude.required &&
+              $v.latitude.minValue && $v.latitude.maxValue && $v.longitude.minValue && $v.longitude.maxValue)"
+            >Add Venue</b-button>
+          </div>
+        </div>
+      </form>
+    </b-modal>
+
+    <b-modal id="editVenueModal" hide-footer title="Edit Venue">
       <form>
         <div class="col">
           <div v-if="this.venueError" class="col">
@@ -489,7 +593,8 @@
             console.log(error);
           });
       },
-      setVenue: function (venue) {
+      setVenue: function (venue, isEdit) {
+        this.clearVenue();
         this.$http.get('http://localhost:4941/api/v1/venues/' + venue.venueId)
           .then(function (response) {
             this.toView.venue = response.data;
@@ -509,8 +614,12 @@
           }, function (error) {
             console.log(error);
           }).then(function () {
-            this.showLongDesc = null;
-            this.$bvModal.show("venueModal");
+            if (isEdit) {
+              this.$bvModal.show("editVenueModal");
+            } else {
+              this.showLongDesc = null;
+              this.$bvModal.show("venueModal");
+            }
         });
       },
       showDesc: function () {
@@ -582,6 +691,34 @@
         }, function (error) {
           this.venueError = error.statusText;
         });
+      },
+      checkAdmin: function (venueId) {
+        //TODO Implement
+        return true;
+      },
+      updateVenue: function (venueId) {
+        this.$http.patch("http://localhost:4941/api/v1/venues/" +  venueId, JSON.stringify({
+          "venueName": 0,
+          "categoryId": 0,
+          "city": 0,
+          "shortDescription": 0,
+          "longDescription": 0,
+          "address": 0,
+          "latitude": 0,
+          "longitude": 0
+        }), {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Authorization': this.$cookies.get('auth_token')
+          }
+        }).then(function (res) {
+
+        }, function (error) {
+          this.error = error.statusText;
+        });
+      },
+      clearVenue: function () {
+        
       }
     },
     validations: {
