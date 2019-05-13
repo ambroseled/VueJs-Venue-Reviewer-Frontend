@@ -116,11 +116,10 @@
     },
     methods: {
       getProfile: function () {
-        this.$http.headers.common['X-Authorization'] = 'YXBpOnBhc3N3b3Jk';
+        let headers = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'X-Authorization',
+          'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE', 'X-Authorization': this.$cookies.get('auth_token')};
         this.$http.get('http://localhost:4941/api/v1/users/' + this.$cookies.get("auth_Id"), {}, {
-          headers: {
-            'X-Authorization': this.$cookies.get('auth_token')
-          }
+          headers: headers
         })
           .then(function (response) {
             this.profile = response.data;
@@ -172,7 +171,6 @@
       getProfilePicture () {
         this.$http.get('http://localhost:4941/api/v1/users/' + this.$cookies.get("auth_Id") + "/photo")
           .then(function (response) {
-            console.log(response.data.image);
             this.profilePicture = response.body;
           }, function (error) {
             this.error = error;

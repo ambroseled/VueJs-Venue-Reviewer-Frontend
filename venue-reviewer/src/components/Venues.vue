@@ -62,7 +62,12 @@
           <b-card
             :title="venue.venueName">
             <b-card-body>
-              <b-img fluid src="https://picsum.photos/id/1025/4951/3301" alt="Profile Photo Display Failed"></b-img>
+              <div v-if="venue.primaryPhoto">
+                <b-img fluid :src="getPhoto(venue.primaryPhoto, venue.venueId)" alt="Profile Photo Display Failed"></b-img>
+              </div>
+              <div v-else>
+                <b-img fluid src="https://picsum.photos/id/237/200/300" alt="Profile Photo Display Failed"></b-img>
+              </div>
               <h5>{{venue.shortDescription}}</h5>
               <div class="row">
                 <a>City: {{venue.city}}</a>
@@ -234,6 +239,7 @@
       </form>
     </b-modal>
 
+    <!-- TODO split so this uses different models from edit -->
     <b-modal id="createVenueModal" hide-footer title="Add Venue">
       <form>
         <div class="col">
@@ -402,11 +408,11 @@
             </div>
           </div>
           <div class="col">
-            <b-button type="submit" @click.prevent="postVenue" :disabled="!($v.venueName.required &&
+            <b-button type="submit" @click.prevent="patchVenue" :disabled="!($v.venueName.required &&
               $v.shortDescription.required && $v.venueCategory.required && $v.longDescription.required &&
               $v.venueCity.required && $v.venueAddress.required && $v.latitude.required && $v.longitude.required &&
               $v.latitude.minValue && $v.latitude.maxValue && $v.longitude.minValue && $v.longitude.maxValue)"
-            >Add Venue</b-button>
+            >Update Venue</b-button>
           </div>
         </div>
       </form>
@@ -472,7 +478,8 @@
         venueAddress: "",
         myLatitude: null,
         myLongitude: null,
-        coords: null
+        coords: null,
+        venueIdEdit: ""
       }
     },
     mounted() {
@@ -495,6 +502,7 @@
             }
             this.reviewVenue = response.data[0].venueId;
             this.setCities();
+            this.setCategories();
           }, function (error) {
             console.log(error);
           });
@@ -624,19 +632,31 @@
         this.$http.get('http://localhost:4941/api/v1/venues/' + venue.venueId)
           .then(function (response) {
             this.toView.venue = response.data;
-            if (venue.modeCostRating === 1) {
-              this.toView.cost = "$";
-            } else if (venue.modeCostRating === 2) {
-              this.toView.cost = "$$";
-            } else if (venue.modeCostRating === 3) {
-              this.toView.cost = "$$$";
-            } else if (venue.modeCostRating === 4) {
-              this.toView.cost = "$$$$";
+            if (isEdit) {
+              this.venueIdEdit = venue.venueId;
+              this.venueName = response.data.venueName;
+              this.shortDescription = response.data.shortDescription;
+              this.venueCategory = response.data.category.categoryId;
+              this.longDescription = response.data.longDescription;
+              this.venueCity = response.data.city;
+              this.venueAddress = response.data.address;
+              this.latitude = response.data.latitude;
+              this.longitude = response.data.longitude;
+            } else {
+              if (venue.modeCostRating === 1) {
+                this.toView.cost = "$";
+              } else if (venue.modeCostRating === 2) {
+                this.toView.cost = "$$";
+              } else if (venue.modeCostRating === 3) {
+                this.toView.cost = "$$$";
+              } else if (venue.modeCostRating === 4) {
+                this.toView.cost = "$$$$";
+              }
+              if (venue.meanStarRating) {
+                this.toView.star = venue.meanStarRating;
+              }
+              this.getReviews(venue.venueId);
             }
-            if (venue.meanStarRating) {
-              this.toView.star = venue.meanStarRating;
-            }
-            this.getReviews(venue.venueId);
           }, function (error) {
             console.log(error);
           }).then(function () {
@@ -722,29 +742,45 @@
         //TODO Implement
         return true;
       },
-      updateVenue: function (venueId) {
-        this.$http.patch("http://localhost:4941/api/v1/venues/" +  venueId, JSON.stringify({
-          "venueName": 0,
-          "categoryId": 0,
-          "city": 0,
-          "shortDescription": 0,
-          "longDescription": 0,
-          "address": 0,
-          "latitude": 0,
-          "longitude": 0
+      patchVenue: function () {
+        this.$http.patch("http://localhost:4941/api/v1/venues/" +  this.venueIdEdit, JSON.stringify({
+          "venueName": this.venueName,
+          "categoryId": this.venueCategory,
+          "city": this.venueCity,
+          "shortDescription": this.shortDescription,
+          "longDescription": this.longDescription,
+          "address": this.venueAddress,
+          "latitude": this.latitude,
+          "longitude": this.longitude
         }), {
           headers: {
             'Content-Type': 'application/json',
             'X-Authorization': this.$cookies.get('auth_token')
           }
         }).then(function (res) {
-
+          this.getVenues();
+          this.$bvModal.hide("editVenueModal");
         }, function (error) {
           this.error = error.statusText;
         });
       },
       clearVenue: function () {
         
+      },
+      getUserVenues: function () {
+        this.$http.get('http://localhost:4941/api/v1/venues?adminId=' + this.$cookies.get('auth_Id'))
+          .then(function (response) {
+            this.venuesData = response.data;
+            this.venuesToSelect = [];
+            for (var i = 0; i < response.data.length; i++) {
+              this.venuesToSelect.push({"text": response.data[i].venueName, "value": response.data[i].venueId});
+            }
+            this.reviewVenue = response.data[0].venueId;
+            this.setCities();
+            this.setCategories();
+          }, function (error) {
+            console.log(error);
+          });
       }
     },
     validations: {

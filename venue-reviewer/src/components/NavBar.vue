@@ -21,6 +21,7 @@
 
     <b-modal id="signUpModal" hide-footer title="Sign Up">
       <a v-if="signUpErr">{{signUpErr}}</a>
+      <a v-if="signInErr">{{signInErr}}</a>
       <form>
         <div class="col">
           <div class="row">
@@ -126,17 +127,7 @@
           signInErr: "",
           signOutErr: "",
           signInEmail: "",
-          signInUsername: "",
-          costRatings: [
-            {"text": "Free", "value": 0},
-            {"text": "$", "value": 1},
-            {"text": "$$", "value": 2},
-            {"text": "$$$", "value": 3},
-            {"text": "$$$$", "value": 4}
-          ],
-          reviewBody: "",
-          starRating: "",
-          costRating: ""
+          signInUsername: ""
         }
       },
         methods: {
