@@ -3,8 +3,10 @@
     <NavBar></NavBar>
     <div>
       <b-jumbotron id="jumbotron" header="Your Profile">
-        <b-button v-b-modal.editProfileModal>Edit Profile</b-button>
-        <b-button v-b-modal.profilePhotoModal>Update Profile Photo</b-button>
+        <div v-if="this.$cookies.get('auth_Id') === this.$route.params.userId">
+          <b-button v-b-modal.editProfileModal>Edit Profile</b-button>
+          <b-button v-b-modal.profilePhotoModal>Update Profile Photo</b-button>
+        </div>
       </b-jumbotron>
     </div>
     <div>
@@ -12,8 +14,7 @@
         <b-img thumbnail fluid rounded="circle" :src="this.profilePicture" alt="Profile Photo Display Failed"></b-img>
       </div>
       <div v-else>
-        <!-- TODO show default image -->
-        <b-img thumbnail fluid rounded="circle" src="this.image" alt="Photo Display Failed"></b-img>
+        <b-img thumbnail fluid rounded="circle" src="https://picsum.photos/id/237/200/300" alt="Photo Display Failed"></b-img>
       </div>
       <div v-if="this.$cookies.get('auth_Id') === this.$route.params.userId">
         <ol>
@@ -61,24 +62,27 @@
             </div>
           </div>
 
-          <button type="submit" class="btn btn-secondary" @click.prevent="saveEdit" :disabled="!$v.username.maxLength &&
+          <button type="submit" class="btn btn-secondary" @click.prevent="checkPassword" :disabled="!$v.username.maxLength &&
           $v.familyName.required && $v.givenName.required && $v.repeatPassword.sameAsPassword">Save</button>
           <button class="btn btn-secondary">Cancel</button>
         </form>
       </b-modal>
 
       <b-modal id="profilePhotoModal" hide-footer title="Profile Photo">
+        <input type="file" @change="onFileChanged" accept="image/png, image/jpeg">
         <div v-if="this.profilePictureUpload">
           <b-img thumbnail fluid rounded="circle" :src="this.profilePictureUpload" alt="Display Failed"></b-img>
         </div>
-        <div v-else>
+        <div v-else-if="this.profilePicture">
           <!-- TODO default image shown else if -->
           <b-img thumbnail fluid rounded="circle" :src="this.profilePicture" alt="Profile Photo Display Failed"></b-img>
         </div>
-
-        <input type="file" @change="onFileChanged" accept="image/png, image/jpeg">
+        <div v-else>
+          <b-img thumbnail fluid rounded="circle" src="https://picsum.photos/id/237/200/300" alt="Profile Photo Display Failed"></b-img>
+        </div>
         <b-button @click.prevent="savePhoto">Save</b-button>
-        <b-button>Cancel</b-button>
+        <b-button @click.prevent="removeProfilePicture">Remove Profile Photo</b-button>
+        <b-button @click.prevent="clearImage">Cancel</b-button>
       </b-modal>
       
     </div>
@@ -107,7 +111,8 @@
         image: null,
         profilePictureUpload: "",
         imageType: "",
-        profilePicture: ""
+        profilePicture: "",
+        passwordErr: ""
       }
     },
     mounted: function () {
@@ -116,9 +121,8 @@
     },
     methods: {
       getProfile: function () {
-        let headers = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'X-Authorization',
-          'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE', 'X-Authorization': this.$cookies.get('auth_token')};
-        this.$http.get('http://localhost:4941/api/v1/users/' + this.$cookies.get("auth_Id"), {}, {
+        let headers = {'X-Authorization': this.$cookies.get('auth_token')};
+        this.$http.get('http://localhost:4942/api/v1/users/' + this.$route.params.userId, {
           headers: headers
         })
           .then(function (response) {
@@ -132,7 +136,7 @@
           });
       },
       saveEdit: function () {
-        this.$http.patch("http://localhost:4941/api/v1/users/" +  this.$cookies.get("auth_Id"), JSON.stringify({
+        this.$http.patch("http://localhost:4942/api/v1/users/" +  this.$cookies.get("auth_Id"), JSON.stringify({
           "givenName": this.givenName,
           "familyName": this.familyName,
           "password": this.password
@@ -147,34 +151,77 @@
           this.error = error.statusText;
         });
       },
-      onFileChanged (event) {
+      onFileChanged: function (event) {
         const file = event.target.files[0];
-        var reader = new FileReader();
-        this.imageType = file.type;
-        reader.onload = (e) => {
-          this.profilePictureUpload = e.target.result;
-        };
-        reader.readAsDataURL(file);
+        if (file.size > 20971520) {
+          alert('Profile image must be below 20MB');
+        } else {
+          var reader = new FileReader();
+          this.imageType = file.type;
+          reader.onload = (e) => {
+            this.profilePictureUpload = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
       },
-      savePhoto () {
-        this.$http.put("http://localhost:4941/api/v1/users/" +  this.$cookies.get("auth_Id") + "/photo", this.profilePictureUpload, {
+      savePhoto: function () {
+        this.$http.put("http://localhost:4942/api/v1/users/" +  this.$cookies.get("auth_Id") + "/photo", this.profilePictureUpload, {
           headers: {
             'Content-Type': this.imageType,
             'X-Authorization': this.$cookies.get('auth_token')
           }
         }).then(function (res) {
-
+          this.profilePictureUpload = null;
+          location.reload();
         }, function (error) {
           this.error = error.statusText;
         });
       },
-      getProfilePicture () {
-        this.$http.get('http://localhost:4941/api/v1/users/' + this.$cookies.get("auth_Id") + "/photo")
+      getProfilePicture: function () {
+        this.$http.get('http://localhost:4942/api/v1/users/' + this.$route.params.userId + "/photo")
           .then(function (response) {
             this.profilePicture = response.body;
           }, function (error) {
             this.error = error;
           });
+      },
+      clearImage: function () {
+        this.profilePictureUpload = null;
+        this.$bvModal.hide("profilePhotoModal")
+      },
+      removeProfilePicture: function () {
+        let headers = {'X-Authorization': this.$cookies.get('auth_token')};
+        this.$http.delete('http://localhost:4942/api/v1/users/' + this.$route.params.userId + '/photo', {
+          headers: headers
+        })
+          .then(function (response) {
+            this.profilePictureUpload = null;
+            this.profilePicture = null;
+            this.$bvModal.hide("profilePhotoModal");
+          }, function (error) {
+            this.error = error;
+          });
+      },
+      checkPassword: function () {
+        this.error = null;
+        this.$http.post("http://localhost:4942/api/v1/users/login", JSON.stringify({
+          "username": this.profile.username,
+          "password": this.currentPassword
+        }), {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }).then(function (response) {
+          this.$cookies.remove("auth_Id");
+          this.$cookies.remove("auth_token");
+
+          this.$cookies.set("auth_token", response.body.token);
+          this.$cookies.set("auth_Id", response.body.userId);
+
+          this.saveEdit();
+        }, function (error) {
+          this.error = error.statusText;
+        });
       }
     },
     validations: {

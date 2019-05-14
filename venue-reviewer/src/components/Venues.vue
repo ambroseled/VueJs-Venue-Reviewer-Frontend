@@ -53,7 +53,7 @@
         </div>
       </div>
       <b-button variant="primary" @click.prevent="filterVenues">Filter Venues</b-button>
-      <b-button variant="primary" @click.prevent="getVenues">Clear Search</b-button>
+      <b-button variant="primary" @click.prevent="getVenues">Reset Filtering</b-button>
       <div v-if="this.$cookies.get('auth_token')">
         <b-button variant="primary" @click.prevent="getUserVenues">Your Venues Only</b-button>
       </div>
@@ -63,10 +63,10 @@
             :title="venue.venueName">
             <b-card-body>
               <div v-if="venue.primaryPhoto">
-                <b-img fluid :src="getPhoto(venue.primaryPhoto, venue.venueId)" alt="Profile Photo Display Failed"></b-img>
+                <b-img fluid :src="'http://localhost:4942/api/v1/venues/' + venue.venueId +'/' + venue.primaryPhoto" alt="Photo Display Failed"></b-img>
               </div>
               <div v-else>
-                <b-img fluid src="https://picsum.photos/id/237/200/300" alt="Profile Photo Display Failed"></b-img>
+                <img src="../assets/logo.png"> <!-- Get default png-->
               </div>
               <h5>{{venue.shortDescription}}</h5>
               <div class="row">
@@ -113,7 +113,7 @@
                 <a>Category: {{toView.venue.category.categoryName}}</a>
               </div>
               <div class="row">
-                <a>Administrator: {{toView.venue.admin.username}}</a>
+                <a :href="'/users/' + toView.venue.admin.userId">Administrator: {{toView.venue.admin.username}}</a>
               </div>
               <div class="row">
                 <a>City: {{toView.venue.city}}</a>
@@ -181,7 +181,7 @@
                       <a>Cost Rating: {{review.costRating}}</a>
                     </div>
                     <div class="row">
-                      <a>Reviewer: {{review.reviewAuthor.username}}</a>
+                      <a :href="'/users/' + review.reviewAuthor.userId">Reviewer: {{review.reviewAuthor.username}}</a>
                     </div>
                   </b-carousel-slide>
                 </div>
@@ -493,7 +493,7 @@
     },
     methods: {
       getVenues: function () {
-        this.$http.get('http://localhost:4941/api/v1/venues')
+        this.$http.get('http://localhost:4942/api/v1/venues')
           .then(function (response) {
             this.venuesData = response.data;
             this.venuesToSelect = [];
@@ -508,9 +508,10 @@
           });
       },
       getPhoto: function (filename, venueId) {
-        this.$http.get('http://localhost:4941/api/v1/venues/' + venueId + "/photos/" + filename)
+        this.$http.get('http://localhost:4942/api/v1/venues/' + venueId + "/photos/" + filename)
           .then(function (response) {
-            return response.data;
+            console.log(response.body);
+            return response.body;
           }, function (error) {
             console.log(error);
           });
@@ -529,7 +530,7 @@
         this.cities.push({"value": null, "text": "Select a City"});
       },
       setCategories: function () {
-        this.$http.get('http://localhost:4941/api/v1/categories')
+        this.$http.get('http://localhost:4942/api/v1/categories')
           .then(function (response) {
              for(let row of response.data) {
                 this.categories.push({
@@ -537,13 +538,13 @@
                   "text": row.categoryName
                 });
              }
-            //this.categories.push({"value": null, "text": "Select a Category"});
+             this.setVenueCategory();
           }, function (error) {
             console.log(error);
           });
       },
       filterVenues: function () {
-        let url = 'http://localhost:4941/api/v1/venues';
+        let url = 'http://localhost:4942/api/v1/venues';
         let first = false;
         if (this.selected) {
           if (!first) {
@@ -629,7 +630,7 @@
       },
       setVenue: function (venue, isEdit) {
         this.clearVenue();
-        this.$http.get('http://localhost:4941/api/v1/venues/' + venue.venueId)
+        this.$http.get('http://localhost:4942/api/v1/venues/' + venue.venueId)
           .then(function (response) {
             this.toView.venue = response.data;
             if (isEdit) {
@@ -655,6 +656,7 @@
               if (venue.meanStarRating) {
                 this.toView.star = venue.meanStarRating;
               }
+              console.log("sadasd");
               this.getReviews(venue.venueId);
             }
           }, function (error) {
@@ -672,7 +674,7 @@
         this.showLongDesc = !this.showLongDesc;
       },
       getReviews: function (venueId) {
-        this.$http.get('http://localhost:4941/api/v1/venues/' + venueId + "/reviews")
+        this.$http.get('http://localhost:4942/api/v1/venues/' + venueId + "/reviews")
           .then(function (response) {
             this.reviews = response.data;
           }, function (error) {
@@ -694,7 +696,7 @@
           this.reviewError = "Review Body is required"
         }
         if (!this.reviewError) {
-          this.$http.post("http://localhost:4941/api/v1/venues/" + this.reviewVenue + "/reviews", JSON.stringify({
+          this.$http.post("http://localhost:4942/api/v1/venues/" + this.reviewVenue + "/reviews", JSON.stringify({
             "reviewBody": this.reviewBody,
             "starRating": parseInt(this.starRating, 10),
             "costRating": this.costRating
@@ -717,7 +719,7 @@
         }
       },
       postVenue: function () {
-        this.$http.post("http://localhost:4941/api/v1/venues", JSON.stringify({
+        this.$http.post("http://localhost:4942/api/v1/venues", JSON.stringify({
           "venueName": this.venueName,
           "categoryId": this.venueCategory,
           "city": this.venueCity,
@@ -743,7 +745,7 @@
         return true;
       },
       patchVenue: function () {
-        this.$http.patch("http://localhost:4941/api/v1/venues/" +  this.venueIdEdit, JSON.stringify({
+        this.$http.patch("http://localhost:4942/api/v1/venues/" +  this.venueIdEdit, JSON.stringify({
           "venueName": this.venueName,
           "categoryId": this.venueCategory,
           "city": this.venueCity,
@@ -768,7 +770,7 @@
         
       },
       getUserVenues: function () {
-        this.$http.get('http://localhost:4941/api/v1/venues?adminId=' + this.$cookies.get('auth_Id'))
+        this.$http.get('http://localhost:4942/api/v1/venues?adminId=' + this.$cookies.get('auth_Id'))
           .then(function (response) {
             this.venuesData = response.data;
             this.venuesToSelect = [];
