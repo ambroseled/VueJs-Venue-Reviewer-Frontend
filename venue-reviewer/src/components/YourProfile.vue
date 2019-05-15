@@ -2,7 +2,7 @@
   <div id="users">
     <NavBar></NavBar>
     <div>
-      <b-jumbotron id="jumbotron" header="Your Profile">
+      <b-jumbotron id="jumbotron" header="User Profile">
         <div v-if="this.$cookies.get('auth_Id') === this.$route.params.userId">
           <b-button v-b-modal.editProfileModal>Edit Profile</b-button>
           <b-button v-b-modal.profilePhotoModal>Update Profile Photo</b-button>
@@ -10,29 +10,31 @@
       </b-jumbotron>
     </div>
     <div>
-      <div v-if="this.profilePicture">
-        <b-img thumbnail fluid rounded="circle" :src="this.profilePicture" alt="Profile Photo Display Failed"></b-img>
-      </div>
-      <div v-else>
-        <b-img thumbnail fluid rounded="circle" src="https://picsum.photos/id/237/200/300" alt="Photo Display Failed"></b-img>
-      </div>
-      <div v-if="this.$cookies.get('auth_Id') === this.$route.params.userId">
-        <ol>
-          <li>Username: {{profile.username}}</li>
-          <li>Email: {{profile.email}}</li>
-          <li>Given Name: {{profile.givenName}}</li>
-          <li>Family Name: {{profile.familyName}}</li>
-        </ol>
-      </div>
-      <div v-else>
-        <ol>
-        <li>Username: {{profile.username}}</li>
-        <li>Given Name: {{profile.givenName}}</li>
-        <li>Family Name: {{profile.familyName}}</li>
-        </ol>
-      </div>
+      <div class="row">
+        <div class="col">
+          <div v-if="this.profilePicture">
+            <img class="img-fill" :src="this.profilePicture" alt="Profile Photo Display Failed">
+          </div>
+          <div v-else>
+            <img class="img-fill" src="../assets/defaultProfile.png" alt="Photo Display Failed">
+          </div>
+        </div>
 
-
+        <div class="col">
+            <div class="row">
+              <a>Username: {{profile.username}}</a>
+            </div>
+            <div v-if="this.$cookies.get('auth_Id') === this.$route.params.userId" class="row">
+              <a>Email: {{profile.email}}</a>
+            </div>
+            <div class="row">
+              <a>Given Name: {{profile.givenName}}</a>
+            </div>
+            <div class="row">
+              <a>Family Name: {{profile.familyName}}</a>
+            </div>
+        </div>
+      </div>
       <b-modal id="editProfileModal" hide-footer title="Sign Up">
         <a v-if="this.error">{{error}}</a>
         <form>
@@ -122,7 +124,7 @@
     methods: {
       getProfile: function () {
         let headers = {'X-Authorization': this.$cookies.get('auth_token')};
-        this.$http.get('http://localhost:4942/api/v1/users/' + this.$route.params.userId, {
+        this.$http.get('http://localhost:4941/api/v1/users/' + this.$route.params.userId, {
           headers: headers
         })
           .then(function (response) {
@@ -136,7 +138,7 @@
           });
       },
       saveEdit: function () {
-        this.$http.patch("http://localhost:4942/api/v1/users/" +  this.$cookies.get("auth_Id"), JSON.stringify({
+        this.$http.patch("http://localhost:4941/api/v1/users/" +  this.$cookies.get("auth_Id"), JSON.stringify({
           "givenName": this.givenName,
           "familyName": this.familyName,
           "password": this.password
@@ -165,7 +167,7 @@
         }
       },
       savePhoto: function () {
-        this.$http.put("http://localhost:4942/api/v1/users/" +  this.$cookies.get("auth_Id") + "/photo", this.profilePictureUpload, {
+        this.$http.put("http://localhost:4941/api/v1/users/" +  this.$cookies.get("auth_Id") + "/photo", this.profilePictureUpload, {
           headers: {
             'Content-Type': this.imageType,
             'X-Authorization': this.$cookies.get('auth_token')
@@ -178,7 +180,7 @@
         });
       },
       getProfilePicture: function () {
-        this.$http.get('http://localhost:4942/api/v1/users/' + this.$route.params.userId + "/photo")
+        this.$http.get('http://localhost:4941/api/v1/users/' + this.$route.params.userId + "/photo")
           .then(function (response) {
             this.profilePicture = response.body;
           }, function (error) {
@@ -191,7 +193,7 @@
       },
       removeProfilePicture: function () {
         let headers = {'X-Authorization': this.$cookies.get('auth_token')};
-        this.$http.delete('http://localhost:4942/api/v1/users/' + this.$route.params.userId + '/photo', {
+        this.$http.delete('http://localhost:4941/api/v1/users/' + this.$route.params.userId + '/photo', {
           headers: headers
         })
           .then(function (response) {
@@ -204,7 +206,7 @@
       },
       checkPassword: function () {
         this.error = null;
-        this.$http.post("http://localhost:4942/api/v1/users/login", JSON.stringify({
+        this.$http.post("http://localhost:4941/api/v1/users/login", JSON.stringify({
           "username": this.profile.username,
           "password": this.currentPassword
         }), {
@@ -254,5 +256,13 @@
     border-width: 0 0 2px;
     outline: 0;
   }
+
+
+  .img-fill {
+    object-fit: contain;
+    height: 50vh;
+    width: 30vw;
+  }
+
 
 </style>

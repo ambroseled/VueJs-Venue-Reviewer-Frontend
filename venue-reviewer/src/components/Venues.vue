@@ -63,10 +63,10 @@
             :title="venue.venueName">
             <b-card-body>
               <div v-if="venue.primaryPhoto">
-                <b-img fluid :src="'http://localhost:4942/api/v1/venues/' + venue.venueId +'/' + venue.primaryPhoto" alt="Photo Display Failed"></b-img>
+                <img class="img-fill" :src="'http://localhost:4942/api/v1/venues/' + venue.venueId +'/' + venue.primaryPhoto" alt="Image display failed">
               </div>
               <div v-else>
-                <img src="../assets/logo.png"> <!-- Get default png-->
+                <img class="img-fill" src="../assets/venueDefault.png" alt="Display Failed"> <!-- Get default png-->
               </div>
               <h5>{{venue.shortDescription}}</h5>
               <div class="row">
@@ -493,7 +493,7 @@
     },
     methods: {
       getVenues: function () {
-        this.$http.get('http://localhost:4942/api/v1/venues')
+        this.$http.get('http://localhost:4941/api/v1/venues')
           .then(function (response) {
             this.venuesData = response.data;
             this.venuesToSelect = [];
@@ -508,7 +508,7 @@
           });
       },
       getPhoto: function (filename, venueId) {
-        this.$http.get('http://localhost:4942/api/v1/venues/' + venueId + "/photos/" + filename)
+        this.$http.get('http://localhost:4941/api/v1/venues/' + venueId + "/photos/" + filename)
           .then(function (response) {
             console.log(response.body);
             return response.body;
@@ -530,7 +530,7 @@
         this.cities.push({"value": null, "text": "Select a City"});
       },
       setCategories: function () {
-        this.$http.get('http://localhost:4942/api/v1/categories')
+        this.$http.get('http://localhost:4941/api/v1/categories')
           .then(function (response) {
              for(let row of response.data) {
                 this.categories.push({
@@ -544,7 +544,7 @@
           });
       },
       filterVenues: function () {
-        let url = 'http://localhost:4942/api/v1/venues';
+        let url = 'http://localhost:4941/api/v1/venues';
         let first = false;
         if (this.selected) {
           if (!first) {
@@ -621,7 +621,6 @@
         this.$http.get(url)
           .then(function (response) {
             this.venuesData = response.data;
-            console.log(response.data);
           }, function (error) {
             console.log(error);
           });
@@ -630,7 +629,7 @@
       },
       setVenue: function (venue, isEdit) {
         this.clearVenue();
-        this.$http.get('http://localhost:4942/api/v1/venues/' + venue.venueId)
+        this.$http.get('http://localhost:4941/api/v1/venues/' + venue.venueId)
           .then(function (response) {
             this.toView.venue = response.data;
             if (isEdit) {
@@ -674,7 +673,7 @@
         this.showLongDesc = !this.showLongDesc;
       },
       getReviews: function (venueId) {
-        this.$http.get('http://localhost:4942/api/v1/venues/' + venueId + "/reviews")
+        this.$http.get('http://localhost:4941/api/v1/venues/' + venueId + "/reviews")
           .then(function (response) {
             this.reviews = response.data;
           }, function (error) {
@@ -696,7 +695,7 @@
           this.reviewError = "Review Body is required"
         }
         if (!this.reviewError) {
-          this.$http.post("http://localhost:4942/api/v1/venues/" + this.reviewVenue + "/reviews", JSON.stringify({
+          this.$http.post("http://localhost:4941/api/v1/venues/" + this.reviewVenue + "/reviews", JSON.stringify({
             "reviewBody": this.reviewBody,
             "starRating": parseInt(this.starRating, 10),
             "costRating": this.costRating
@@ -719,7 +718,7 @@
         }
       },
       postVenue: function () {
-        this.$http.post("http://localhost:4942/api/v1/venues", JSON.stringify({
+        this.$http.post("http://localhost:4941/api/v1/venues", JSON.stringify({
           "venueName": this.venueName,
           "categoryId": this.venueCategory,
           "city": this.venueCity,
@@ -745,7 +744,7 @@
         return true;
       },
       patchVenue: function () {
-        this.$http.patch("http://localhost:4942/api/v1/venues/" +  this.venueIdEdit, JSON.stringify({
+        this.$http.patch("http://localhost:4941/api/v1/venues/" +  this.venueIdEdit, JSON.stringify({
           "venueName": this.venueName,
           "categoryId": this.venueCategory,
           "city": this.venueCity,
@@ -770,7 +769,7 @@
         
       },
       getUserVenues: function () {
-        this.$http.get('http://localhost:4942/api/v1/venues?adminId=' + this.$cookies.get('auth_Id'))
+        this.$http.get('http://localhost:4941/api/v1/venues?adminId=' + this.$cookies.get('auth_Id'))
           .then(function (response) {
             this.venuesData = response.data;
             this.venuesToSelect = [];
@@ -832,4 +831,9 @@
 
 <style scoped>
 
+.img-fill {
+  object-fit: contain;
+  height: 30vh;
+  width: 20vw;
+}
 </style>

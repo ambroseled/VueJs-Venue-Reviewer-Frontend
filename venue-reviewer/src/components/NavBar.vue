@@ -133,7 +133,7 @@
         methods: {
           signUp: function () {
             this.signUpErr = null;
-            this.$http.post("http://localhost:4942/api/v1/users", JSON.stringify({
+            this.$http.post("http://localhost:4941/api/v1/users", JSON.stringify({
               "username": this.username,
               "email": this.email,
               "givenName": this.givenName,
@@ -157,7 +157,7 @@
           },
           signIn: function () {
             this.signInErr = null;
-            this.$http.post("http://localhost:4942/api/v1/users/login", JSON.stringify({
+            this.$http.post("http://localhost:4941/api/v1/users/login", JSON.stringify({
               "username": this.signInUsername,
               "email": this.signInEmail,
               "password": this.password
@@ -175,7 +175,7 @@
             });
           },
           signOut: function () {
-            this.$http.post('http://localhost:4942/api/v1/users/logout', {}, {
+            this.$http.post('http://localhost:4941/api/v1/users/logout', {}, {
               headers: {
                 'X-Authorization': this.$cookies.get('auth_token')
               }
