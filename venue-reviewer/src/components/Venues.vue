@@ -92,10 +92,13 @@
               </div>
               <div class="row">
                 <div class="col">
-                  <b-button @click.prevent="setVenue(venue, 0)">View Details</b-button>
+                  <b-button @click.prevent="setVenue(venue, 0)">Details</b-button>
                 </div>
                 <div v-if="checkAdmin(venue.venueId)" class="col">
                   <b-button @click.prevent="setVenue(venue, 1)">Edit Details</b-button>
+                </div>
+                <div v-if="checkAdmin(venue.venueId)" class="col">
+                  <b-button v-b-modal.photoVenueModal @click.prevent="setVenueId(venue)">Add Photo</b-button>
                 </div>
               </div>
             </b-card-body>
@@ -152,7 +155,12 @@
                 indicators
                 background="#D3D3D3"
                 style="text-shadow: 1px 1px 2px #333;">
-
+                <div v-if="toView.venue.photos.length !== 0">
+                  asdsdd
+                </div>
+                <div v-else>
+                  <h2>No Photos for venue</h2>
+                </div>
               </b-carousel>
             </b-tab>
             <b-tab title="Reviews">
@@ -418,6 +426,41 @@
       </form>
     </b-modal>
 
+    <b-modal id="photoVenueModal" hide-footer title="Add Photo for Venue">
+      <form>
+        <div class="col">
+          <div v-if="this.photoError" class="col">
+            <a>{{photoError}}</a>
+          </div>
+          <input type="file" @change="onFileChanged" accept="image/png, image/jpeg">
+          <b-form-checkbox
+            id="checkbox-1"
+            v-model="status"
+            name="checkbox-1"
+            value="true"
+            unchecked-value="false"
+          >
+            Make Photo Primary
+          </b-form-checkbox>
+          <div v-if="this.photoUpload">
+            <img class="img-fill" :src="this.photoUpload" alt="Display Failed">
+          </div>
+          <div v-else>
+            <img class="img-fill" src="../assets/venueDefault.png" alt="Display Failed">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col">
+            <b-button @click.prevent="closePhotoModal" >Cancel</b-button>
+          </div>
+          <div class="col">
+            <b-button @click.prevent="postPhoto">Save Photo</b-button>
+          </div>
+
+        </div>
+      </form>
+    </b-modal>
+
   </div>
 </template>
 
@@ -479,7 +522,11 @@
         myLatitude: null,
         myLongitude: null,
         coords: null,
-        venueIdEdit: ""
+        venueIdEdit: "",
+        photoUpload: "",
+        photoError: "",
+        imageType: "",
+        venuePhotoId: ""
       }
     },
     mounted() {
@@ -655,7 +702,6 @@
               if (venue.meanStarRating) {
                 this.toView.star = venue.meanStarRating;
               }
-              console.log("sadasd");
               this.getReviews(venue.venueId);
             }
           }, function (error) {
@@ -782,6 +828,38 @@
           }, function (error) {
             console.log(error);
           });
+      },
+      onFileChanged: function (event) {
+        const file = event.target.files[0];
+        if (file.size > 20971520) {
+          alert('Profile image must be below 20MB');
+        } else {
+          var reader = new FileReader();
+          this.imageType = file.type;
+          reader.onload = (e) => {
+            this.photoUpload = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      },
+      closePhotoModal: function () {
+        this.$bvModal.hide("photoVenueModal");
+      },
+      postPhoto: function () {
+        this.$http.post("http://localhost:4941/api/v1/venues/" +  this.venuePhotoId + "/photos", this.photoUpload, {
+          headers: {
+            'Content-Type': this.imageType,
+            'X-Authorization': this.$cookies.get('auth_token')
+          }
+        }).then(function (res) {
+          this.profilePictureUpload = null;
+          location.reload();
+        }, function (error) {
+          this.error = error.statusText;
+        });
+      },
+      setVenueId: function (venue) {
+        this.venuePhotoId = venue.venueId;
       }
     },
     validations: {

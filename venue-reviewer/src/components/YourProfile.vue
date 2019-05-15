@@ -4,8 +4,8 @@
     <div>
       <b-jumbotron id="jumbotron" header="User Profile">
         <div v-if="this.$cookies.get('auth_Id') === this.$route.params.userId">
-          <b-button v-b-modal.editProfileModal>Edit Profile</b-button>
-          <b-button v-b-modal.profilePhotoModal>Update Profile Photo</b-button>
+          <b-button v-b-modal.editProfileModal @click.prevent="clearError">Edit Profile</b-button>
+          <b-button v-b-modal.profilePhotoModal @click.prevent="clearError">Update Profile Photo</b-button>
         </div>
       </b-jumbotron>
     </div>
@@ -54,18 +54,19 @@
             <div class="row">
               <form-group>
                 <input v-model="currentPassword" placeholder="Current Password" type="password">
-                <!--a v-if="!$v.currentPassword.checkCurrent">Current password required to change password</a-->
+                <a v-if="!$v.currentPassword.required">Required</a>
               </form-group>
             </div>
             <div class="row">
               <form-group>
                 <input v-model="password" placeholder="Password" type="password">
+                <a v-if="!$v.password.required">Required</a>
               </form-group>
             </div>
           </div>
 
-          <button type="submit" class="btn btn-secondary" @click.prevent="checkPassword" :disabled="!$v.username.maxLength &&
-          $v.familyName.required && $v.givenName.required && $v.repeatPassword.sameAsPassword">Save</button>
+          <button type="submit" class="btn btn-secondary" @click.prevent="checkPassword" :disabled="!($v.username.maxLength &&
+          $v.familyName.required && $v.givenName.required && $v.password.required && $v.currentPassword.required)">Save</button>
           <button class="btn btn-secondary">Cancel</button>
         </form>
       </b-modal>
@@ -73,14 +74,13 @@
       <b-modal id="profilePhotoModal" hide-footer title="Profile Photo">
         <input type="file" @change="onFileChanged" accept="image/png, image/jpeg">
         <div v-if="this.profilePictureUpload">
-          <b-img thumbnail fluid rounded="circle" :src="this.profilePictureUpload" alt="Display Failed"></b-img>
+          <img class="img-fill" :src="this.profilePictureUpload" alt="Profile Photo Display Failed">
         </div>
         <div v-else-if="this.profilePicture">
-          <!-- TODO default image shown else if -->
-          <b-img thumbnail fluid rounded="circle" :src="this.profilePicture" alt="Profile Photo Display Failed"></b-img>
+          <img class="img-fill" :src="this.profilePicture" alt="Profile Photo Display Failed">
         </div>
         <div v-else>
-          <b-img thumbnail fluid rounded="circle" src="https://picsum.photos/id/237/200/300" alt="Profile Photo Display Failed"></b-img>
+          <img class="img-fill" src="../assets/defaultProfile.png" alt="Photo Display Failed">
         </div>
         <b-button @click.prevent="savePhoto">Save</b-button>
         <b-button @click.prevent="removeProfilePicture">Remove Profile Photo</b-button>
@@ -133,6 +133,7 @@
             this.username = response.data.username;
             this.givenName = response.data.givenName;
             this.familyName = response.data.familyName;
+            this.profilePictureUpload = null;
           }, function (error) {
             this.error = error;
           });
@@ -148,7 +149,7 @@
             'X-Authorization': this.$cookies.get('auth_token')
           }
         }).then(function (res) {
-
+          this.$bvModal.hide("editProfileModal");
         }, function (error) {
           this.error = error.statusText;
         });
@@ -222,8 +223,14 @@
 
           this.saveEdit();
         }, function (error) {
-          this.error = error.statusText;
+          if (error.statusText === 'Bad Request: invalid username/email/password supplied') {
+            this.error = "Password Incorrect";
+          }
+
         });
+      },
+      clearError: function () {
+        this.error = null;
       }
     },
     validations: {
@@ -239,6 +246,12 @@
       },
       email: {
         email,
+        required
+      },
+      password: {
+        required
+      },
+      currentPassword: {
         required
       }
     }
