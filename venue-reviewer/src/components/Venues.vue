@@ -73,7 +73,7 @@
                 <a>City: {{venue.city}}</a>
               </div>
               <div class="row">
-                <a>Category: {{venue.categoryId}}</a>
+                <a>Category: {{categoriesMap.get(venue.categoryId)}}</a>
               </div>
               <div v-if="venue.meanStarRating" class="row">
                 <a>Mean Star Rating: {{venue.meanStarRating}}</a>
@@ -94,12 +94,7 @@
                 <div class="col">
                   <b-button @click.prevent="setVenue(venue, 0)">Details</b-button>
                 </div>
-                <div v-if="checkAdmin(venue.venueId)" class="col">
-                  <b-button @click.prevent="setVenue(venue, 1)">Edit Details</b-button>
-                </div>
-                <div v-if="checkAdmin(venue.venueId)" class="col">
-                  <b-button v-b-modal.photoVenueModal @click.prevent="setVenueId(venue)">Add Photo</b-button>
-                </div>
+
               </div>
             </b-card-body>
           </b-card>
@@ -143,6 +138,14 @@
               </div>
               <div class="row">
                 <b-link @click.prevent="showDesc"> Toggle Long Description</b-link>
+              </div>
+              <div class="row" v-if="toView.venue.admin.userId == this.$cookies.get('auth_Id')">
+                <div class="col">
+                  <b-button v-b-modal.editVenueModal>Edit Details</b-button>
+                </div>
+                <div class="col">
+                  <b-button v-b-modal.photoVenueModal @click.prevent="setVenueId(toView.venue)">Add Photo</b-button>
+                </div>
               </div>
             </b-tab>
             <b-tab title="Photos">
@@ -442,6 +445,7 @@
           >
             Make Photo Primary
           </b-form-checkbox>
+          <input type="text" v-model="photoDescription">
           <div v-if="this.photoUpload">
             <img class="img-fill" :src="this.photoUpload" alt="Display Failed">
           </div>
@@ -526,7 +530,10 @@
         photoUpload: "",
         photoError: "",
         imageType: "",
-        venuePhotoId: ""
+        venuePhotoId: "",
+        photoDescription: "",
+        isAdmin: "",
+        categoriesMap: new Map()
       }
     },
     mounted() {
@@ -579,13 +586,15 @@
       setCategories: function () {
         this.$http.get('http://localhost:4941/api/v1/categories')
           .then(function (response) {
+            this.categoriesMap.clear();
              for(let row of response.data) {
                 this.categories.push({
                   "value": row.categoryId,
                   "text": row.categoryName
                 });
+                this.categoriesMap.set(row.categoryId, row.categoryName);
              }
-             this.setVenueCategory();
+             console.log(this.categoriesMap);
           }, function (error) {
             console.log(error);
           });
@@ -679,31 +688,28 @@
         this.$http.get('http://localhost:4941/api/v1/venues/' + venue.venueId)
           .then(function (response) {
             this.toView.venue = response.data;
-            if (isEdit) {
-              this.venueIdEdit = venue.venueId;
-              this.venueName = response.data.venueName;
-              this.shortDescription = response.data.shortDescription;
-              this.venueCategory = response.data.category.categoryId;
-              this.longDescription = response.data.longDescription;
-              this.venueCity = response.data.city;
-              this.venueAddress = response.data.address;
-              this.latitude = response.data.latitude;
-              this.longitude = response.data.longitude;
-            } else {
-              if (venue.modeCostRating === 1) {
-                this.toView.cost = "$";
-              } else if (venue.modeCostRating === 2) {
-                this.toView.cost = "$$";
-              } else if (venue.modeCostRating === 3) {
-                this.toView.cost = "$$$";
-              } else if (venue.modeCostRating === 4) {
-                this.toView.cost = "$$$$";
-              }
-              if (venue.meanStarRating) {
-                this.toView.star = venue.meanStarRating;
-              }
-              this.getReviews(venue.venueId);
+            if (venue.modeCostRating === 1) {
+              this.toView.cost = "$";
+            } else if (venue.modeCostRating === 2) {
+              this.toView.cost = "$$";
+            } else if (venue.modeCostRating === 3) {
+              this.toView.cost = "$$$";
+            } else if (venue.modeCostRating === 4) {
+              this.toView.cost = "$$$$";
             }
+            if (venue.meanStarRating) {
+              this.toView.star = venue.meanStarRating;
+            }
+            this.getReviews(venue.venueId);
+            this.venueIdEdit = venue.venueId;
+            this.venueName = response.data.venueName;
+            this.shortDescription = response.data.shortDescription;
+            this.venueCategory = response.data.category.categoryId;
+            this.longDescription = response.data.longDescription;
+            this.venueCity = response.data.city;
+            this.venueAddress = response.data.address;
+            this.latitude = response.data.latitude;
+            this.longitude = response.data.longitude;
           }, function (error) {
             console.log(error);
           }).then(function () {
@@ -785,10 +791,6 @@
           this.venueError = error.statusText;
         });
       },
-      checkAdmin: function (venueId) {
-        //TODO Implement
-        return true;
-      },
       patchVenue: function () {
         this.$http.patch("http://localhost:4941/api/v1/venues/" +  this.venueIdEdit, JSON.stringify({
           "venueName": this.venueName,
@@ -846,9 +848,13 @@
         this.$bvModal.hide("photoVenueModal");
       },
       postPhoto: function () {
-        this.$http.post("http://localhost:4941/api/v1/venues/" +  this.venuePhotoId + "/photos", this.photoUpload, {
+        this.$http.post("http://localhost:4941/api/v1/venues/" +  this.venuePhotoId + "/photos", {
+          "makePrimary": this.isPrimary,
+          "description": this.photoDescription,
+          "photo": this.photoUpload
+        }, {
           headers: {
-            'Content-Type': this.imageType,
+            'Content-Type': 'multipart/form-data',
             'X-Authorization': this.$cookies.get('auth_token')
           }
         }).then(function (res) {
