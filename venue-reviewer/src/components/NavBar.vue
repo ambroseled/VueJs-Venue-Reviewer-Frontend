@@ -25,7 +25,8 @@
       <form>
         <div class="col">
           <div class="row">
-            <form-group>
+            <form-group
+              name="givenName">
               <input v-model="givenName" placeholder="First Name" type="text">
               <a v-if="!$v.givenName.required">Required</a>
             </form-group>
@@ -41,7 +42,8 @@
               <input v-model="username" placeholder="Username" type="text">
               <a v-if="!$v.username.required">Required</a>
               <!-- TODO Custom Validator to check for in use email/username-->
-              <a v-if="!$v.username.maxLength">Username must be under 64 characters</a>
+              <a v-else-if="!$v.username.alphaNum">Must be alphanumeric</a>
+              <a v-else-if="!$v.username.maxLength">Username must be under 64 characters</a>
             </form-group>
           </div>
           <div class="row">
@@ -69,7 +71,7 @@
         <button type="submit" class="btn btn-secondary" @click.prevent="signUp" :disabled="!($v.password.required &&
         $v.email.required && $v.username.required && $v.email.email && $v.repeatPassword.required &&
         $v.repeatPassword.sameAsPassword && $v.username.maxLength && $v.familyName.required &&
-        $v.givenName.required)">Sign Up</button>
+        $v.givenName.required && $v.username.alphaNum)">Sign Up</button>
       </form>
     </b-modal>
 
@@ -107,7 +109,7 @@
 
 <script>
     import * as router from "vue";
-    import { required, sameAs, maxLength, email } from 'vuelidate/lib/validators'
+    import { required, sameAs, maxLength, email, alphaNum } from 'vuelidate/lib/validators'
     export default {
         name: "NavBar",
       data() {
@@ -205,7 +207,8 @@
         },
         username: {
             required,
-            maxLength: maxLength(64)
+            maxLength: maxLength(64),
+            alphaNum
         },
         email: {
             email,
