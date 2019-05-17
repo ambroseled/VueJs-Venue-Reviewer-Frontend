@@ -158,7 +158,15 @@
                 background="#D3D3D3"
                 style="text-shadow: 1px 1px 2px #333;">
                 <div v-for="photo in toView.venue.photos">
-                  <b-carousel-slide :text="photo.photoDescription" style="height: 30vh;"></b-carousel-slide>
+                  <b-carousel-slide :text="photo.photoDescription" :img-src="photo.photoFilename.photo" style="height: 30vh;">
+                    <div class="row strip">
+                      <div class="col" v-if="toView.venue.admin.userId == $cookies.get('auth_Id')">
+                        <b-button v-if="!photo.isPrimary" variant="outline-primary" @click.prevent="makePrimary(photo.photoFilename)">Make Primary</b-button>
+                        <b-button variant="outline-danger" @click.prevent="deletePhoto(photo.photoFilename.fileName)">Delete</b-button>
+                      </div>
+
+                    </div>
+                  </b-carousel-slide>
                 </div>
               </b-carousel>
             </b-tab>
@@ -530,7 +538,8 @@
         photoDescription: "",
         isAdmin: "",
         categoriesMap: new Map(),
-        isPrimary: ""
+        isPrimary: "",
+        photoToPost: ""
       }
     },
     mounted() {
@@ -564,6 +573,7 @@
       setPhoto: function (index) {
         this.$http.get('http://localhost:4941/api/v1/venues/' + this.venuesData[index].venueId + "/photos/" + this.venuesData[index].primaryPhoto)
           .then(function (response) {
+
             this.venuesData[index].primaryPhoto = response.body;
           }, function (error) {
             console.log(error);
@@ -814,7 +824,7 @@
         });
       },
       clearVenue: function () {
-        
+
       },
       getUserVenues: function () {
         this.$http.get('http://localhost:4941/api/v1/venues?adminId=' + this.$cookies.get('auth_Id'))
@@ -833,6 +843,7 @@
       },
       onFileChanged: function (event) {
         const file = event.target.files[0];
+        this.photoToPost = file;
         if (file.size > 20971520) {
           alert('Profile image must be below 20MB');
         } else {
@@ -848,12 +859,12 @@
         this.$bvModal.hide("photoVenueModal");
       },
       postPhoto: function () {
-        console.log(this.venuePhotoId);
-        this.$http.post("http://localhost:4941/api/v1/venues/" +  this.venuePhotoId + "/photos", {
-          "makePrimary": this.isPrimary,
-          "description": this.photoDescription,
-          "photo": this.photoUpload
-        }, {
+        let formData = new FormData();
+        formData.append('makePrimary', this.isPrimary);
+        formData.append('description', this.photoDescription);
+        formData.append('photo', this.photoToPost);
+        this.$http.post("http://localhost:4941/api/v1/venues/" +  this.venuePhotoId + "/photos", formData
+        , {
           headers: {
             'Content-Type': 'multipart/form-data',
             'X-Authorization': this.$cookies.get('auth_token')
@@ -871,13 +882,30 @@
       },
       setVenuePhotos: function () {
         for (let i = 0; i < this.toView.venue.photos.length; i++) {
-            if (this.toView.venue.photos.photoFilename) {this.$http.get('http://localhost:4941/api/v1/venues/' + this.toView.venue.venueId + "/photos/" + this.toView.venue.photos[i].photoFilename)
+            if (this.toView.venue.photos[i].photoFilename) {
+              this.$http.get('http://localhost:4941/api/v1/venues/' + this.venuePhotoId + "/photos/" + this.toView.venue.photos[i].photoFilename)
               .then(function (response) {
-                this.toView.venue.photos[i] = response.body;
+                let filename = this.toView.venue.photos[i].photoFilename;
+                this.toView.venue.photos[i].photoFilename = {
+                  "photo": response.body,
+                  "fileName": filename
+                };
               }, function (error) {
                 console.log(error);
               });}
         }
+      },
+      deletePhoto: function (filename) {
+        this.$http.delete('http://localhost:4941/api/v1/venues/' + this.venuePhotoId + "/photos/" + filename, {
+          headers: {
+            'X-Authorization': this.$cookies.get('auth_token')
+          }
+        })
+          .then(function (response) {
+            location.reload();
+          }, function (error) {
+            console.log(error);
+          });
       }
     },
     validations: {
@@ -932,4 +960,9 @@
   height: 30vh;
   width: 20vw;
 }
+
+  .strip {
+    background: rgba(1, 1, 1, 0.3);
+    border-radius: 5rem;
+  }
 </style>
