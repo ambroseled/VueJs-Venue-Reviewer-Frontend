@@ -72,6 +72,7 @@
       </b-modal>
 
       <b-modal id="profilePhotoModal" hide-footer title="Profile Photo">
+        <a v-if="this.error">{{error}}</a>
         <input type="file" @change="onFileChanged" accept="image/png, image/jpeg">
         <div v-if="this.profilePictureUpload">
           <img class="img-fill" :src="this.profilePictureUpload" alt="Profile Photo Display Failed">
@@ -114,7 +115,8 @@
         profilePictureUpload: "",
         imageType: "",
         profilePicture: "",
-        passwordErr: ""
+        passwordErr: "",
+        photoError: ""
       }
     },
     mounted: function () {
@@ -134,8 +136,11 @@
             this.givenName = response.data.givenName;
             this.familyName = response.data.familyName;
             this.profilePictureUpload = null;
+            this.error = null;
           }, function (error) {
-            this.error = error;
+            if (error.statusText === 'Not Found') {
+              alert('User profile not found');
+            }
           });
       },
       saveEdit: function () {
@@ -150,6 +155,7 @@
           }
         }).then(function (res) {
           this.$bvModal.hide("editProfileModal");
+          this.getProfile();
         }, function (error) {
           this.error = error.statusText;
         });
@@ -185,7 +191,6 @@
           .then(function (response) {
             this.profilePicture = response.body;
           }, function (error) {
-            this.error = error;
           });
       },
       clearImage: function () {
@@ -273,8 +278,8 @@
 
   .img-fill {
     object-fit: contain;
-    height: 50vh;
-    width: 30vw;
+    height: 45vh;
+    width: 25vw;
   }
 
 

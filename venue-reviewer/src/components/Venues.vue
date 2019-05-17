@@ -54,16 +54,15 @@
       </div>
       <b-button variant="primary" @click.prevent="filterVenues">Filter Venues</b-button>
       <b-button variant="primary" @click.prevent="getVenues">Reset Filtering</b-button>
-      <div v-if="this.$cookies.get('auth_token')">
-        <b-button variant="primary" @click.prevent="getUserVenues">Your Venues Only</b-button>
-      </div>
+      <b-button v-if="this.$cookies.get('auth_token')" variant="primary" @click.prevent="getUserVenues">Your Venues Only</b-button>
       <div class="row">
         <div v-for="venue in venuesData" class="w-25">
           <b-card
             :title="venue.venueName">
             <b-card-body>
               <div v-if="venue.primaryPhoto">
-                <img class="img-fill" :src="'http://localhost:4942/api/v1/venues/' + venue.venueId +'/' + venue.primaryPhoto" alt="Image display failed">
+                <!--img class="img-fill" :src="'http://localhost:4941/api/v1/venues/' + venue.venueId +'/' + venue.primaryPhoto" alt="Image display failed"-->
+                <img class="img-fill" :src="venue.primaryPhoto" alt="Image display failed">
               </div>
               <div v-else>
                 <img class="img-fill" src="../assets/venueDefault.png" alt="Display Failed"> <!-- Get default png-->
@@ -158,11 +157,8 @@
                 indicators
                 background="#D3D3D3"
                 style="text-shadow: 1px 1px 2px #333;">
-                <div v-if="toView.venue.photos.length !== 0">
-                  asdsdd
-                </div>
-                <div v-else>
-                  <h2>No Photos for venue</h2>
+                <div v-for="photo in toView.venue.photos">
+                  <b-carousel-slide :text="photo.photoDescription" style="height: 30vh;"></b-carousel-slide>
                 </div>
               </b-carousel>
             </b-tab>
@@ -350,7 +346,7 @@
             <div class="col">
               <b-form-group
                 label="Venue Name"
-                name="venueName">
+                name="venueNameEdit">
                 <b-input type="text" v-model="venueName"></b-input>
                 <a v-if="!$v.venueName.required">Required</a>
               </b-form-group>
@@ -358,7 +354,7 @@
             <div class="col">
               <b-form-group
                 label="Short Description"
-                name="shortDescription">
+                name="shortDescriptionEdit">
                 <b-input type="text" v-model="shortDescription"></b-input>
                 <a v-if="!$v.shortDescription.required">Required</a>
               </b-form-group>
@@ -367,7 +363,7 @@
           <div class="col">
             <b-form-group
               label="Select a Category"
-              name="venueCategory">
+              name="venueCategoryEdit">
               <b-form-select v-model="venueCategory" :options="categories" size="sm"></b-form-select>
               <a v-if="!$v.venueCategory.required">Required</a>
             </b-form-group>
@@ -375,7 +371,7 @@
           <div class="col">
             <b-form-group
               label="Long Description"
-              name="longDescription">
+              name="longDescriptionEdit">
               <b-input type="text" v-model="longDescription"></b-input>
               <a v-if="!$v.longDescription.required">Required</a>
             </b-form-group>
@@ -384,7 +380,7 @@
             <div class="col">
               <b-form-group
                 label="City"
-                name="venueCity">
+                name="venueCityEdit">
                 <b-input type="text" v-model="venueCity"></b-input>
                 <a v-if="!$v.venueCity.required">Required</a>
               </b-form-group>
@@ -392,7 +388,7 @@
             <div class="col">
               <b-form-group
                 label="Address"
-                name="venueAddress">
+                name="venueAddressEdit">
                 <b-input type="text" v-model="venueAddress"></b-input>
                 <a v-if="!$v.venueAddress.required">Required</a>
               </b-form-group>
@@ -402,7 +398,7 @@
             <div class="col">
               <b-form-group
                 label="Latitude"
-                name="latitude">
+                name="latitudeEdit">
                 <b-input type="number" v-model="latitude"></b-input>
                 <a v-if="!$v.latitude.required">Required</a>
                 <a v-if="!$v.latitude.minValue || !$v.latitude.maxValue">Latitude must be between (-90, 90)</a>
@@ -411,7 +407,7 @@
             <div class="col">
               <b-form-group
                 label="Longitude"
-                name="longitude">
+                name="longitudeEdit">
                 <b-input type="number" v-model="longitude" min="-90" max="90"></b-input>
                 <a v-if="!$v.longitude.required">Required</a>
                 <a v-if="!$v.longitude.minValue || !$v.longitude.maxValue">Longitude must be between (-90, 90)</a>
@@ -438,7 +434,7 @@
           <input type="file" @change="onFileChanged" accept="image/png, image/jpeg">
           <b-form-checkbox
             id="checkbox-1"
-            v-model="status"
+            v-model="isPrimary"
             name="checkbox-1"
             value="true"
             unchecked-value="false"
@@ -533,7 +529,8 @@
         venuePhotoId: "",
         photoDescription: "",
         isAdmin: "",
-        categoriesMap: new Map()
+        categoriesMap: new Map(),
+        isPrimary: ""
       }
     },
     mounted() {
@@ -551,8 +548,11 @@
           .then(function (response) {
             this.venuesData = response.data;
             this.venuesToSelect = [];
-            for (var i = 0; i < response.data.length; i++) {
-              this.venuesToSelect.push({"text": response.data[i].venueName, "value": response.data[i].venueId});
+            for (var i = 0; i < this.venuesData.length; i++) {
+              this.venuesToSelect.push({"text": this.venuesData[i].venueName, "value": this.venuesData[i].venueId});
+              if (this.venuesData[i].primaryPhoto) {
+                this.setPhoto(i);
+              }
             }
             this.reviewVenue = response.data[0].venueId;
             this.setCities();
@@ -561,11 +561,10 @@
             console.log(error);
           });
       },
-      getPhoto: function (filename, venueId) {
-        this.$http.get('http://localhost:4941/api/v1/venues/' + venueId + "/photos/" + filename)
+      setPhoto: function (index) {
+        this.$http.get('http://localhost:4941/api/v1/venues/' + this.venuesData[index].venueId + "/photos/" + this.venuesData[index].primaryPhoto)
           .then(function (response) {
-            console.log(response.body);
-            return response.body;
+            this.venuesData[index].primaryPhoto = response.body;
           }, function (error) {
             console.log(error);
           });
@@ -594,7 +593,6 @@
                 });
                 this.categoriesMap.set(row.categoryId, row.categoryName);
              }
-             console.log(this.categoriesMap);
           }, function (error) {
             console.log(error);
           });
@@ -702,6 +700,7 @@
             }
             this.getReviews(venue.venueId);
             this.venueIdEdit = venue.venueId;
+            this.venuePhotoId = venue.venueId;
             this.venueName = response.data.venueName;
             this.shortDescription = response.data.shortDescription;
             this.venueCategory = response.data.category.categoryId;
@@ -710,6 +709,7 @@
             this.venueAddress = response.data.address;
             this.latitude = response.data.latitude;
             this.longitude = response.data.longitude;
+            this.setVenuePhotos();
           }, function (error) {
             console.log(error);
           }).then(function () {
@@ -848,6 +848,7 @@
         this.$bvModal.hide("photoVenueModal");
       },
       postPhoto: function () {
+        console.log(this.venuePhotoId);
         this.$http.post("http://localhost:4941/api/v1/venues/" +  this.venuePhotoId + "/photos", {
           "makePrimary": this.isPrimary,
           "description": this.photoDescription,
@@ -865,7 +866,18 @@
         });
       },
       setVenueId: function (venue) {
-        this.venuePhotoId = venue.venueId;
+        console.log(venue);
+        //this.venuePhotoId = venue.venueId;
+      },
+      setVenuePhotos: function () {
+        for (let i = 0; i < this.toView.venue.photos.length; i++) {
+            if (this.toView.venue.photos.photoFilename) {this.$http.get('http://localhost:4941/api/v1/venues/' + this.toView.venue.venueId + "/photos/" + this.toView.venue.photos[i].photoFilename)
+              .then(function (response) {
+                this.toView.venue.photos[i] = response.body;
+              }, function (error) {
+                console.log(error);
+              });}
+        }
       }
     },
     validations: {

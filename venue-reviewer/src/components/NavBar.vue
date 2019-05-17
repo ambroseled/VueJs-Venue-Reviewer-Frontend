@@ -32,13 +32,15 @@
             </form-group>
           </div>
           <div class="row">
-            <form-group>
+            <form-group
+              name="familyName">
               <input v-model="familyName" placeholder="Family Name" type="text">
               <a v-if="!$v.familyName.required">Required</a>
             </form-group>
           </div>
           <div class="row">
-            <form-group>
+            <form-group
+              name="username">
               <input v-model="username" placeholder="Username" type="text">
               <a v-if="!$v.username.required">Required</a>
               <!-- TODO Custom Validator to check for in use email/username-->

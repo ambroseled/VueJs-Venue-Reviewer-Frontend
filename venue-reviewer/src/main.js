@@ -23,6 +23,11 @@ Vue.use(VueBrowserGeolocation);
 
 const routes = [
   {
+    path: '/',
+    redirect: '/venues',
+    name: 'home'
+  },
+  {
     path: '/venues',
     name: 'venues',
     component: Venues
