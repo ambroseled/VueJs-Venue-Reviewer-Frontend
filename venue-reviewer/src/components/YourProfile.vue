@@ -35,8 +35,9 @@
             </div>
         </div>
       </div>
+
       <b-modal id="editProfileModal" hide-footer title="Sign Up">
-        <a v-if="this.error">{{error}}</a>
+        <a class="alert alert-danger" v-if="this.error">{{error}}</a>
         <form>
           <div class="col">
             <div class="row">

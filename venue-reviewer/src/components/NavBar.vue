@@ -20,8 +20,8 @@
     </b-navbar-nav>
 
     <b-modal id="signUpModal" hide-footer title="Sign Up">
-      <a v-if="signUpErr">{{signUpErr}}</a>
-      <a v-if="signInErr">{{signInErr}}</a>
+      <a class="alert alert-danger" v-if="signUpErr">{{signUpErr}}</a>
+      <a class="alert alert-danger" v-if="signInErr">{{signInErr}}</a>
       <form>
         <div class="col">
           <div class="row">
@@ -78,7 +78,7 @@
     </b-modal>
 
     <b-modal id="signInModal" hide-footer title="Sign In">
-      <a v-if="signInErr">{{signInErr}}</a>
+      <a class="alert alert-danger" v-if="signInErr">{{signInErr}}</a>
       <form>
         <div class="col">
           <a>Sign in with username or email</a>

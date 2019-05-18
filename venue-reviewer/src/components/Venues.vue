@@ -52,48 +52,64 @@
           </b-form-group>
         </div>
       </div>
-      <b-button variant="primary" @click.prevent="filterVenues">Filter Venues</b-button>
-      <b-button variant="primary" @click.prevent="getVenues">Reset Filtering</b-button>
-      <b-button v-if="this.$cookies.get('auth_token')" variant="primary" @click.prevent="getUserVenues">Your Venues Only</b-button>
+
       <div class="row">
-        <div v-for="venue in venuesData" class="w-25">
+        <div class="col">
+          <a>
+            Current Batch: {{batches.get(currentBatch).start}} - {{batches.get(currentBatch).end}}
+          </a>
+          <b-button variant="primary" @click.prevent="currentBatch -= 1" :disabled="!(currentBatch > 0)">Previous</b-button>
+          <b-button variant="primary" @click.prevent="currentBatch += 1" :disabled="currentBatch > batches.values.length">Next</b-button>
+        </div>
+        <div class="col">
+
+          <b-button variant="primary" @click.prevent="filterVenues">Filter Venues</b-button>
+          <b-button variant="primary" @click.prevent="getVenues">Reset Filtering</b-button>
+          <b-button v-if="this.$cookies.get('auth_token')" variant="primary" @click.prevent="getUserVenues">Your Venues Only</b-button>
+        </div>
+      </div>
+
+
+      <div class="row">
+        <div v-for="(n, i) in (batches.get(currentBatch).end - batches.get(currentBatch).start) + 1" class="w-50">
           <b-card
-            :title="venue.venueName">
+            :title="venuesData[i + batches.get(currentBatch).start].venueName">
             <b-card-body>
-              <div v-if="venue.primaryPhoto">
+              <div v-if="venuesData[i + batches.get(currentBatch).start].primaryPhoto">
                 <!--img class="img-fill" :src="'http://localhost:4941/api/v1/venues/' + venue.venueId +'/' + venue.primaryPhoto" alt="Image display failed"-->
-                <img class="img-fill" :src="venue.primaryPhoto" alt="Image display failed">
+                <img class="img-fill" :src="venuesData[i + batches.get(currentBatch).start].primaryPhoto" alt="Image display failed">
               </div>
               <div v-else>
                 <img class="img-fill" src="../assets/venueDefault.png" alt="Display Failed"> <!-- Get default png-->
               </div>
-              <h5>{{venue.shortDescription}}</h5>
-              <div class="row">
-                <a>City: {{venue.city}}</a>
-              </div>
-              <div class="row">
-                <a>Category: {{categoriesMap.get(venue.categoryId)}}</a>
-              </div>
-              <div v-if="venue.meanStarRating" class="row">
-                <a>Mean Star Rating: {{venue.meanStarRating}}</a>
-              </div>
-              <div v-else class="row">
-                <a>Mean Star Rating: 3</a>
-              </div>
-              <div class="row" v-if="venue.modeCostRating">
-                <a>Mode Cost Rating: {{venue.modeCostRating}}</a>
-              </div>
-              <div v-else class="row">
-                <a>Mode Cost Rating: 0</a>
-              </div>
-              <div v-if="venue.distance" class="row">
-                <a>Distance: {{venue.distance}}</a>
+              <h5>{{venuesData[i + batches.get(currentBatch).start].shortDescription}}</h5>
+              <div class="col">
+                <div class="row">
+                  <a>City: {{venuesData[i + batches.get(currentBatch).start].city}}</a>
+                </div>
+                <div class="row">
+                  <a>Category: {{categoriesMap.get(venuesData[i + batches.get(currentBatch).start].categoryId)}}</a>
+                </div>
+                <div v-if="venuesData[i + batches.get(currentBatch).start].meanStarRating" class="row">
+                  <a>Mean Star Rating: {{venuesData[i + batches.get(currentBatch).start].meanStarRating}}</a>
+                </div>
+                <div v-else class="row">
+                  <a>Mean Star Rating: 3</a>
+                </div>
+                <div class="row" v-if="venuesData[i + batches.get(currentBatch).start].modeCostRating">
+                  <a>Mode Cost Rating: {{venuesData[i + batches.get(currentBatch).start].modeCostRating}}</a>
+                </div>
+                <div v-else class="row">
+                  <a>Mode Cost Rating: 0</a>
+                </div>
+                <div v-if="venuesData[i + batches.get(currentBatch).start].distance" class="row">
+                  <a>Distance: {{venuesData[i + batches.get(currentBatch).start].distance}}</a>
+                </div>
               </div>
               <div class="row">
                 <div class="col">
-                  <b-button @click.prevent="setVenue(venue, 0)">Details</b-button>
+                  <b-button block @click.prevent="setVenue(venuesData[i + batches.get(currentBatch).start], 0)">More Details</b-button>
                 </div>
-
               </div>
             </b-card-body>
           </b-card>
@@ -212,7 +228,7 @@
       <form>
         <div class="col">
           <div v-if="this.reviewError" class="col">
-            <a>{{reviewError}}</a>
+            <a class="alert alert-danger">{{reviewError}}</a>
           </div>
           <div class="col">
             <b-form-group
@@ -259,7 +275,7 @@
       <form>
         <div class="col">
           <div v-if="this.venueError" class="col">
-            <a>{{venueError}}</a>
+            <a class="alert alert-danger">{{venueError}}</a>
           </div>
           <div class="row">
             <div class="col">
@@ -348,7 +364,7 @@
       <form>
         <div class="col">
           <div v-if="this.venueError" class="col">
-            <a>{{venueError}}</a>
+            <a class="alert alert-danger">{{venueError}}</a>
           </div>
           <div class="row">
             <div class="col">
@@ -437,7 +453,7 @@
       <form>
         <div class="col">
           <div v-if="this.photoError" class="col">
-            <a>{{photoError}}</a>
+            <a class="alert alert-danger">{{photoError}}</a>
           </div>
           <input type="file" @change="onFileChanged" accept="image/png, image/jpeg">
           <b-form-checkbox
@@ -539,7 +555,10 @@
         isAdmin: "",
         categoriesMap: new Map(),
         isPrimary: "",
-        photoToPost: ""
+        photoToPost: "",
+        batches: new Map(),
+        currentBatch: 1,
+        numBatches: null
       }
     },
     mounted() {
@@ -566,6 +585,7 @@
             this.reviewVenue = response.data[0].venueId;
             this.setCities();
             this.setCategories();
+            this.formBatches();
           }, function (error) {
             console.log(error);
           });
@@ -685,6 +705,14 @@
         this.$http.get(url)
           .then(function (response) {
             this.venuesData = response.data;
+            this.venuesToSelect = [];
+            for (var i = 0; i < this.venuesData.length; i++) {
+              this.venuesToSelect.push({"text": this.venuesData[i].venueName, "value": this.venuesData[i].venueId});
+              if (this.venuesData[i].primaryPhoto) {
+                this.setPhoto(i);
+              }
+            }
+            this.formBatches();
           }, function (error) {
             console.log(error);
           });
@@ -842,27 +870,16 @@
           });
       },
       onFileChanged: function (event) {
-        const file = event.target.files[0];
-        this.photoToPost = file;
-        if (file.size > 20971520) {
-          alert('Profile image must be below 20MB');
-        } else {
-          var reader = new FileReader();
-          this.imageType = file.type;
-          reader.onload = (e) => {
-            this.photoUpload = e.target.result;
-          };
-          reader.readAsDataURL(file);
-        }
+        this.photoToPost = event.target.files[0];
       },
       closePhotoModal: function () {
         this.$bvModal.hide("photoVenueModal");
       },
       postPhoto: function () {
         let formData = new FormData();
-        formData.append('makePrimary', this.isPrimary);
-        formData.append('description', this.photoDescription);
         formData.append('photo', this.photoToPost);
+        formData.append('description', this.photoDescription);
+        formData.append('makePrimary', this.isPrimary);
         this.$http.post("http://localhost:4941/api/v1/venues/" +  this.venuePhotoId + "/photos", formData
         , {
           headers: {
@@ -906,6 +923,25 @@
           }, function (error) {
             console.log(error);
           });
+      },
+      formBatches: function () {
+        this.batches.clear();
+        let numVenues = this.venuesData.length;
+        let numShown = 0;
+        for (let i = 0; i < Math.floor(numVenues / 10); i++) {
+          this.batches.set(i, {
+            "start": numShown,
+            "end": numShown + 9
+          });
+          numShown += 10;
+        }
+        if (numShown < numVenues) {
+          this.batches.set(this.batches.values.length + 1, {
+            "start": numShown,
+            "end": numShown + ((numVenues - numShown) - 1)
+          });
+        }
+        this.numBatches = this.batches.values.length;
       }
     },
     validations: {
