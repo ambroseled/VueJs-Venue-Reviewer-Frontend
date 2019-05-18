@@ -3,7 +3,6 @@
     <b-navbar-brand>VenueReviewer</b-navbar-brand>
     <b-navbar-nav>
       <b-nav-item href="/venues">Venues</b-nav-item>
-      <b-nav-item href="/users">Users</b-nav-item>
     </b-navbar-nav>
 
     <b-navbar-nav class="ml-auto">

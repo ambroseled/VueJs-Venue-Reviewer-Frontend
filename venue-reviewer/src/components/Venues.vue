@@ -56,7 +56,7 @@
       <div class="row">
         <div class="col">
           <a>
-            Current Batch: {{batches.get(currentBatch).start}} - {{batches.get(currentBatch).end}}
+            Viewing: {{batches.get(currentBatch).start + 1}} - {{batches.get(currentBatch).end + 1}} of {{venuesData.length}}
           </a>
           <b-button variant="primary" @click.prevent="currentBatch -= 1" :disabled="!(currentBatch > 0)">Previous</b-button>
           <b-button variant="primary" @click.prevent="currentBatch += 1" :disabled="currentBatch > batches.values.length">Next</b-button>
@@ -68,7 +68,6 @@
           <b-button v-if="this.$cookies.get('auth_token')" variant="primary" @click.prevent="getUserVenues">Your Venues Only</b-button>
         </div>
       </div>
-
 
       <div class="row">
         <div v-for="(n, i) in (batches.get(currentBatch).end - batches.get(currentBatch).start) + 1" class="w-50">
@@ -221,7 +220,6 @@
           </b-tabs>
         </div>
       </b-modal>
-
     </div>
 
     <b-modal id="reviewModal" hide-footer title="Post Review">
@@ -557,7 +555,7 @@
         isPrimary: "",
         photoToPost: "",
         batches: new Map(),
-        currentBatch: 1,
+        currentBatch: 0,
         numBatches: null
       }
     },
