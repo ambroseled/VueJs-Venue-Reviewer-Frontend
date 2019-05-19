@@ -56,7 +56,7 @@
       <div class="row">
         <div class="col">
           <a>
-            Current Batch: {{batches.get(currentBatch).start}} - {{batches.get(currentBatch).end}}
+            Viewing: {{batches.get(currentBatch).start + 1}} - {{batches.get(currentBatch).end + 1}} of {{venuesData.length}}
           </a>
           <b-button variant="primary" @click.prevent="currentBatch -= 1" :disabled="!(currentBatch > 0)">Previous</b-button>
           <b-button variant="primary" @click.prevent="currentBatch += 1" :disabled="currentBatch > batches.values.length">Next</b-button>
@@ -220,7 +220,6 @@
           </b-tabs>
         </div>
       </b-modal>
-
     </div>
 
     <b-modal id="reviewModal" hide-footer title="Post Review">
@@ -555,7 +554,7 @@
         isPrimary: "",
         photoToPost: "",
         batches: new Map(),
-        currentBatch: 1,
+        currentBatch: 0,
         numBatches: null
       }
     },
