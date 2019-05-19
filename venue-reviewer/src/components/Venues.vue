@@ -69,7 +69,6 @@
         </div>
       </div>
 
-
       <div class="row">
         <div v-for="(n, i) in (batches.get(currentBatch).end - batches.get(currentBatch).start) + 1" class="w-50">
           <b-card
@@ -108,7 +107,7 @@
               </div>
               <div class="row">
                 <div class="col">
-                  <b-button block @click.prevent="setVenue(venuesData[i + batches.get(currentBatch).start], 0)">More Details</b-button>
+                  <b-button block @click.prevent="setVenue(venuesData[i + batches.get(currentBatch).start], 0); venueError = null">More Details</b-button>
                 </div>
               </div>
             </b-card-body>
@@ -156,10 +155,10 @@
               </div>
               <div class="row" v-if="toView.venue.admin.userId == this.$cookies.get('auth_Id')">
                 <div class="col">
-                  <b-button v-b-modal.editVenueModal>Edit Details</b-button>
+                  <b-button v-b-modal.editVenueModal @click.prevent="venueError = null">Edit Details</b-button>
                 </div>
                 <div class="col">
-                  <b-button v-b-modal.photoVenueModal @click.prevent="setVenueId(toView.venue)">Add Photo</b-button>
+                  <b-button v-b-modal.photoVenueModal>Add Photo</b-button>
                 </div>
               </div>
             </b-tab>
@@ -270,7 +269,6 @@
       </form>
     </b-modal>
 
-    <!-- TODO split so this uses different models from edit -->
     <b-modal id="createVenueModal" hide-footer title="Add Venue">
       <form>
         <div class="col">
@@ -587,16 +585,17 @@
             this.setCategories();
             this.formBatches();
           }, function (error) {
-            console.log(error);
+            alert("Error retrieving venues");
           });
       },
       setPhoto: function (index) {
         this.$http.get('http://localhost:4941/api/v1/venues/' + this.venuesData[index].venueId + "/photos/" + this.venuesData[index].primaryPhoto)
           .then(function (response) {
-
             this.venuesData[index].primaryPhoto = response.body;
           }, function (error) {
-            console.log(error);
+            if (error.status === 404) {
+              alert("Venue: " + this.venuesData[index].venueName + " photo not found");
+            }
           });
       },
       setCities: function () {
@@ -624,7 +623,7 @@
                 this.categoriesMap.set(row.categoryId, row.categoryName);
              }
           }, function (error) {
-            console.log(error);
+            alert("Error retrieving categories");
           });
       },
       filterVenues: function () {
@@ -714,13 +713,12 @@
             }
             this.formBatches();
           }, function (error) {
-            console.log(error);
+            alert("Error filtering venues, please try again");
           });
 
 
       },
       setVenue: function (venue, isEdit) {
-        this.clearVenue();
         this.$http.get('http://localhost:4941/api/v1/venues/' + venue.venueId)
           .then(function (response) {
             this.toView.venue = response.data;
@@ -749,7 +747,11 @@
             this.longitude = response.data.longitude;
             this.setVenuePhotos();
           }, function (error) {
-            console.log(error);
+            if (error.status === 404) {
+              alert("Venue not found");
+            } else {
+              alert("Error retrieving venue data");
+            }
           }).then(function () {
             if (isEdit) {
               this.$bvModal.show("editVenueModal");
@@ -767,7 +769,7 @@
           .then(function (response) {
             this.reviews = response.data;
           }, function (error) {
-            console.log(error);
+            alert("Error getting venue: " + venueId + "'s reviews");
           });
       },
       postReview: function () {
@@ -808,6 +810,7 @@
         }
       },
       postVenue: function () {
+        this.venueError = null;
         this.$http.post("http://localhost:4941/api/v1/venues", JSON.stringify({
           "venueName": this.venueName,
           "categoryId": this.venueCategory,
@@ -848,11 +851,8 @@
           this.getVenues();
           this.$bvModal.hide("editVenueModal");
         }, function (error) {
-          this.error = error.statusText;
+          this.venueError = error.statusText;
         });
-      },
-      clearVenue: function () {
-
       },
       getUserVenues: function () {
         this.$http.get('http://localhost:4941/api/v1/venues?adminId=' + this.$cookies.get('auth_Id'))
@@ -866,16 +866,23 @@
             this.setCities();
             this.setCategories();
           }, function (error) {
-            console.log(error);
+            alert("Error getting your venues");
           });
       },
       onFileChanged: function (event) {
-        this.photoToPost = event.target.files[0];
+        const file = event.target.files[0];
+        if (file.size > 20971520) {
+          alert('Profile image must be below 20MB');
+        } else {
+          this.photoToPost = file;
+        }
+        console.log(this.photoToPost);
       },
       closePhotoModal: function () {
         this.$bvModal.hide("photoVenueModal");
       },
       postPhoto: function () {
+
         let formData = new FormData();
         formData.append('photo', this.photoToPost);
         formData.append('description', this.photoDescription);
@@ -890,12 +897,8 @@
           this.profilePictureUpload = null;
           location.reload();
         }, function (error) {
-          this.error = error.statusText;
+          this.photoError = error.statusText;
         });
-      },
-      setVenueId: function (venue) {
-        console.log(venue);
-        //this.venuePhotoId = venue.venueId;
       },
       setVenuePhotos: function () {
         for (let i = 0; i < this.toView.venue.photos.length; i++) {
@@ -908,7 +911,7 @@
                   "fileName": filename
                 };
               }, function (error) {
-                console.log(error);
+                alert("Error getting photo: " + this.toView.venue.photos[i].photoFilename);
               });}
         }
       },
@@ -921,7 +924,7 @@
           .then(function (response) {
             location.reload();
           }, function (error) {
-            console.log(error);
+            alert("Error deleting photo: " + filename);
           });
       },
       formBatches: function () {
@@ -942,6 +945,7 @@
           });
         }
         this.numBatches = this.batches.values.length;
+        this.currentBatch = 0;
       }
     },
     validations: {
@@ -991,11 +995,11 @@
 
 <style scoped>
 
-.img-fill {
-  object-fit: contain;
-  height: 30vh;
-  width: 20vw;
-}
+  .img-fill {
+    object-fit: contain;
+    height: 30vh;
+    width: 20vw;
+  }
 
   .strip {
     background: rgba(1, 1, 1, 0.3);

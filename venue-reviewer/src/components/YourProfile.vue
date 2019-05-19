@@ -73,7 +73,7 @@
       </b-modal>
 
       <b-modal id="profilePhotoModal" hide-footer title="Profile Photo">
-        <a v-if="this.error">{{error}}</a>
+        <a v-if="this.photoError">{{photoError}}</a>
         <input type="file" @change="onFileChanged" accept="image/png, image/jpeg">
         <div v-if="this.profilePictureUpload">
           <img class="img-fill" :src="this.profilePictureUpload" alt="Profile Photo Display Failed">
@@ -141,6 +141,8 @@
           }, function (error) {
             if (error.statusText === 'Not Found') {
               alert('User profile not found');
+            } else {
+              alert("Error retrieving user profile");
             }
           });
       },
@@ -184,7 +186,7 @@
           this.profilePictureUpload = null;
           location.reload();
         }, function (error) {
-          this.error = error.statusText;
+          this.photoError = error.statusText;
         });
       },
       getProfilePicture: function () {
@@ -192,6 +194,11 @@
           .then(function (response) {
             this.profilePicture = response.body;
           }, function (error) {
+            if (error.status === 404) {
+              alert("User: " + this.$route.params.userId + " profile picture not found");
+            } else {
+              alert("Error getting users profile picture");
+            }
           });
       },
       clearImage: function () {
@@ -208,7 +215,7 @@
             this.profilePicture = null;
             this.$bvModal.hide("profilePhotoModal");
           }, function (error) {
-            this.error = error;
+            this.photoError = error.statusText;
           });
       },
       checkPassword: function () {
