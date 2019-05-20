@@ -948,7 +948,7 @@
         this.currentBatch = 0;
       },
       makePrimary: function (filename) {
-        this.$http.post('http://localhost:4941/api/v1/venues/' + this.venuePhotoId + "/photos/" + filename +"/setPrimary", {
+        this.$http.post('http://localhost:4941/api/v1/venues/' + this.venuePhotoId + "/photos/" + filename +"/setPrimary", {}, {
           headers: {
             'X-Authorization': this.$cookies.get('auth_token')
           }
