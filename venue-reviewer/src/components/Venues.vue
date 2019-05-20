@@ -75,8 +75,7 @@
             :title="venuesData[i + batches.get(currentBatch).start].venueName">
             <b-card-body>
               <div v-if="venuesData[i + batches.get(currentBatch).start].primaryPhoto">
-                <!--img class="img-fill" :src="'http://localhost:4941/api/v1/venues/' + venue.venueId +'/' + venue.primaryPhoto" alt="Image display failed"-->
-                <img class="img-fill" :src="venuesData[i + batches.get(currentBatch).start].primaryPhoto" alt="Image display failed">
+               <img class="img-fill" :src="venuesData[i + batches.get(currentBatch).start].primaryPhoto" alt="Image display failed">
               </div>
               <div v-else>
                 <img class="img-fill" src="../assets/venueDefault.png" alt="Display Failed"> <!-- Get default png-->
@@ -463,8 +462,8 @@
             Make Photo Primary
           </b-form-checkbox>
           <input type="text" v-model="photoDescription">
-          <div v-if="this.photoUpload">
-            <img class="img-fill" :src="this.photoUpload" alt="Display Failed">
+          <div v-if="photoUpload">
+            <img class="img-fill" :src="photoUpload" alt="Display Failed">
           </div>
           <div v-else>
             <img class="img-fill" src="../assets/venueDefault.png" alt="Display Failed">
@@ -555,7 +554,9 @@
         photoToPost: "",
         batches: new Map(),
         currentBatch: 0,
-        numBatches: null
+        numBatches: null,
+        imageValid: true,
+        image: ""
       }
     },
     mounted() {
@@ -591,6 +592,8 @@
         this.$http.get('http://localhost:4941/api/v1/venues/' + this.venuesData[index].venueId + "/photos/" + this.venuesData[index].primaryPhoto)
           .then(function (response) {
             this.venuesData[index].primaryPhoto = response.body;
+            var imageTest = "data:image/png;," + response.body;
+            console.log(imageTest);
           }, function (error) {
             if (error.status === 404) {
               alert("Venue: " + this.venuesData[index].venueName + " photo not found");
@@ -870,18 +873,28 @@
       },
       onFileChanged: function (event) {
         const file = event.target.files[0];
+        const fileType = file['type'];
+        this.imageValid = true;
         if (file.size > 20971520) {
           alert('Profile image must be below 20MB');
+          this.imageValid = false;
+        } else if (fileType !== "image/jpeg" && fileType !== "image/png") {
+          alert('Profile image must be jpeg or png');
+          this.imageValid = false;
         } else {
           this.photoToPost = file;
+          var reader = new FileReader();
+          this.imageType = file.type;
+          reader.onload = (e) => {
+            this.photoUpload = e.target.result;
+          };
+          reader.readAsDataURL(file);
         }
-        console.log(this.photoToPost);
       },
       closePhotoModal: function () {
         this.$bvModal.hide("photoVenueModal");
       },
       postPhoto: function () {
-
         let formData = new FormData();
         formData.append('photo', this.photoToPost);
         formData.append('description', this.photoDescription);
@@ -945,6 +958,9 @@
         }
         this.numBatches = this.batches.values.length;
         this.currentBatch = 0;
+      },
+      hexTo64: function (str) {
+        return btoa(String.fromCharCode.apply(null, str.replace(/\r|\n/g, "").replace(/([\da-fA-F]{2}) ?/g, "0x$1 ").replace(/ +$/, "").split(" ")));
       }
     },
     validations: {

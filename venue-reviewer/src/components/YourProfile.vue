@@ -193,6 +193,7 @@
         this.$http.get('http://localhost:4941/api/v1/users/' + this.$route.params.userId + "/photo")
           .then(function (response) {
             this.profilePicture = response.body;
+            console.log(response.body);
           }, function (error) {
             if (error.status === 404) {
               alert("User: " + this.$route.params.userId + " profile picture not found");
