@@ -75,7 +75,7 @@
             :title="venuesData[i + batches.get(currentBatch).start].venueName">
             <b-card-body>
               <div v-if="venuesData[i + batches.get(currentBatch).start].primaryPhoto">
-               <img class="img-fill" :src="venuesData[i + batches.get(currentBatch).start].primaryPhoto" alt="Image display failed">
+               <img class="img-fill" :src="venuesData[i + batches.get(currentBatch).start].primaryPhoto" onerror="this.onerror=null; this.src='../assets/venueDefault.png'" alt="Image display failed">
               </div>
               <div v-else>
                 <img class="img-fill" src="../assets/venueDefault.png" alt="Display Failed"> <!-- Get default png-->
@@ -172,10 +172,10 @@
                 background="#D3D3D3"
                 style="text-shadow: 1px 1px 2px #333;">
                 <div v-for="photo in toView.venue.photos">
-                  <b-carousel-slide :text="photo.photoDescription" :img-src="photo.photoFilename.photo" style="height: 30vh;">
+                  <b-carousel-slide :text="photo.photoDescription" :img-src="photo.photoFilename.src">
                     <div class="row strip">
                       <div class="col" v-if="toView.venue.admin.userId == $cookies.get('auth_Id')">
-                        <b-button v-if="!photo.isPrimary" variant="outline-primary" @click.prevent="makePrimary(photo.photoFilename)">Make Primary</b-button>
+                        <b-button v-if="!photo.isPrimary" variant="outline-primary" @click.prevent="makePrimary(photo.photoFilename.fileName)">Make Primary</b-button>
                         <b-button variant="outline-danger" @click.prevent="deletePhoto(photo.photoFilename.fileName)">Delete</b-button>
                       </div>
 
@@ -461,7 +461,7 @@
           >
             Make Photo Primary
           </b-form-checkbox>
-          <input type="text" v-model="photoDescription">
+          <input type="text" v-model="photoDescription" placeholder="Photo Description">
           <div v-if="photoUpload">
             <img class="img-fill" :src="photoUpload" alt="Display Failed">
           </div>
@@ -589,16 +589,9 @@
           });
       },
       setPhoto: function (index) {
-        this.$http.get('http://localhost:4941/api/v1/venues/' + this.venuesData[index].venueId + "/photos/" + this.venuesData[index].primaryPhoto)
-          .then(function (response) {
-            this.venuesData[index].primaryPhoto = response.body;
-            var imageTest = "data:image/png;," + response.body;
-            console.log(imageTest);
-          }, function (error) {
-            if (error.status === 404) {
-              alert("Venue: " + this.venuesData[index].venueName + " photo not found");
-            }
-          });
+        if (this.venuesData[index].primaryPhoto) {
+          this.venuesData[index].primaryPhoto = 'http://localhost:4941/api/v1/venues/' + this.venuesData[index].venueId + "/photos/" + this.venuesData[index].primaryPhoto;
+        }
       },
       setCities: function () {
         var citySet = new Set();
@@ -898,7 +891,7 @@
         let formData = new FormData();
         formData.append('photo', this.photoToPost);
         formData.append('description', this.photoDescription);
-        formData.append('makePrimary', this.isPrimary);
+        formData.append('makePrimary', this.isPrimary === 'true');
         this.$http.post("http://localhost:4941/api/v1/venues/" +  this.venuePhotoId + "/photos", formData
         , {
           headers: {
@@ -914,17 +907,12 @@
       },
       setVenuePhotos: function () {
         for (let i = 0; i < this.toView.venue.photos.length; i++) {
-            if (this.toView.venue.photos[i].photoFilename) {
-              this.$http.get('http://localhost:4941/api/v1/venues/' + this.venuePhotoId + "/photos/" + this.toView.venue.photos[i].photoFilename)
-              .then(function (response) {
-                let filename = this.toView.venue.photos[i].photoFilename;
-                this.toView.venue.photos[i].photoFilename = {
-                  "photo": response.body,
-                  "fileName": filename
-                };
-              }, function (error) {
-                alert("Error getting photo: " + this.toView.venue.photos[i].photoFilename);
-              });}
+              let filename = this.toView.venue.photos[i].photoFilename;
+              this.toView.venue.photos[i].photoFilename = {
+                "src": 'http://localhost:4941/api/v1/venues/' + this.venuePhotoId + "/photos/" + this.toView.venue.photos[i].photoFilename,
+                "fileName": filename,
+                "description": this.toView.venue.photos[i].photoDescription
+              };
         }
       },
       deletePhoto: function (filename) {
@@ -959,8 +947,17 @@
         this.numBatches = this.batches.values.length;
         this.currentBatch = 0;
       },
-      hexTo64: function (str) {
-        return btoa(String.fromCharCode.apply(null, str.replace(/\r|\n/g, "").replace(/([\da-fA-F]{2}) ?/g, "0x$1 ").replace(/ +$/, "").split(" ")));
+      makePrimary: function (filename) {
+        this.$http.post('http://localhost:4941/api/v1/venues/' + this.venuePhotoId + "/photos/" + filename +"/setPrimary", {
+          headers: {
+            'X-Authorization': this.$cookies.get('auth_token')
+          }
+        })
+          .then(function (response) {
+            location.reload();
+          }, function (error) {
+            alert("Error setting primary photo as: " + filename);
+          });
       }
     },
     validations: {
