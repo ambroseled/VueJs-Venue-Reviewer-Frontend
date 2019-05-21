@@ -24,48 +24,48 @@
       <form>
         <div class="col">
           <div class="row">
-            <form-group
+            <b-form-group
               name="givenName">
               <input v-model="givenName" placeholder="First Name" type="text">
               <a v-if="!$v.givenName.required">Required</a>
-            </form-group>
+            </b-form-group>
           </div>
           <div class="row">
-            <form-group
+            <b-form-group
               name="familyName">
               <input v-model="familyName" placeholder="Family Name" type="text">
               <a v-if="!$v.familyName.required">Required</a>
-            </form-group>
+            </b-form-group>
           </div>
           <div class="row">
-            <form-group
+            <b-form-group
               name="username">
               <input v-model="username" placeholder="Username" type="text">
               <a v-if="!$v.username.required">Required</a>
               <!-- TODO Custom Validator to check for in use email/username-->
               <a v-else-if="!$v.username.alphaNum">Must be alphanumeric</a>
               <a v-else-if="!$v.username.maxLength">Username must be under 64 characters</a>
-            </form-group>
+            </b-form-group>
           </div>
           <div class="row">
-            <form-group>
+            <b-form-group>
               <input v-model="email" placeholder="Email Address" type="email">
               <a v-if="!$v.email.required">Required</a>
               <a v-else-if="!$v.email.email">Invalid Email</a>
-            </form-group>
+            </b-form-group>
           </div>
           <div class="row">
-            <form-group>
+            <b-form-group>
               <input v-model="password" placeholder="Password" type="password">
               <a v-if="!$v.password.required">Required</a>
-            </form-group>
+            </b-form-group>
           </div>
           <div class="row">
-            <form-group>
+            <b-form-group>
               <input v-model="repeatPassword" placeholder="Confirm Password" type="password">
               <a v-if="!$v.repeatPassword.required">Required</a>
               <a v-else-if="!$v.repeatPassword.sameAsPassword">Passwords Must Match</a>
-            </form-group>
+            </b-form-group>
           </div>
         </div>
 
@@ -82,22 +82,22 @@
         <div class="col">
           <a>Sign in with username or email</a>
           <div class="row">
-            <form-group>
+            <b-form-group>
               <input v-model="signInUsername" placeholder="Username" type="text">
               <a v-if="!$v.signInUsername.check">Required</a>
-            </form-group>
+            </b-form-group>
           </div>
           <div class="row">
-            <form-group>
+            <b-form-group>
               <input v-model="signInEmail" placeholder="Email Address" type="email">
               <a v-if="!$v.signInEmail.check">Required</a>
-            </form-group>
+            </b-form-group>
           </div>
           <div class="row">
-            <form-group>
+            <b-form-group>
               <input v-model="password" placeholder="Password" type="password">
               <a v-if="!$v.password.required">Required</a>
-            </form-group>
+            </b-form-group>
           </div>
         </div>
 

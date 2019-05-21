@@ -41,28 +41,28 @@
         <form>
           <div class="col">
             <div class="row">
-              <form-group>
+              <b-form-group>
                 <input v-model="givenName" placeholder="First Name" type="text">
                 <a v-if="!$v.givenName.required">Required</a>
-              </form-group>
+              </b-form-group>
             </div>
             <div class="row">
-              <form-group>
+              <b-form-group>
                 <input v-model="familyName" placeholder="Family Name" type="text">
                 <a v-if="!$v.familyName.required">Required</a>
-              </form-group>
+              </b-form-group>
             </div>
             <div class="row">
-              <form-group>
+              <b-form-group>
                 <input v-model="currentPassword" placeholder="Current Password" type="password">
                 <a v-if="!$v.currentPassword.required">Required</a>
-              </form-group>
+              </b-form-group>
             </div>
             <div class="row">
-              <form-group>
+              <b-form-group>
                 <input v-model="password" placeholder="Password" type="password">
                 <a v-if="!$v.password.required">Required</a>
-              </form-group>
+              </b-form-group>
             </div>
           </div>
 
@@ -139,7 +139,6 @@
             this.profilePictureUpload = null;
             this.error = null;
           }, function (error) {
-            console.log(error);
             alert("Error retrieving user profile");
           });
       },
@@ -190,7 +189,6 @@
         this.$http.get('http://localhost:4941/api/v1/users/' + this.$route.params.userId + "/photo")
           .then(function (response) {
             this.profilePicture = response.body;
-            console.log(response.body);
           }, function (error) {
           });
       },

@@ -568,7 +568,6 @@
         .then(coordinates => {
           this.myLatitude = coordinates.lat;
           this.myLongitude = coordinates.lng;
-          console.log(coordinates);
         });
     },
     methods: {
@@ -588,7 +587,6 @@
             this.reviewVenue = response.data[0].venueId;
             this.setCities();
             this.setCategories();
-            this.formBatches();
           }, function (error) {
             alert("Error retrieving venues");
           });
@@ -685,7 +683,6 @@
             value = "STAR_RATING";
             order = "false";
           }
-          console.log(this.myLatitude);
           if (!first) {
             this.venuesUrl += "?sortBy=" + value + "&reverseSort=" + order;
             first = true;
@@ -864,7 +861,6 @@
             this.reviewVenue = response.data[0].venueId;
             this.setCities();
             this.setCategories();
-            this.formBatches();
           }, function (error) {
             alert("Error getting your venues");
           });
@@ -931,39 +927,6 @@
           }, function (error) {
             alert("Error deleting photo: " + filename);
           });
-      },
-      formBatches: function () {
-        this.batches.clear();
-        let numVenues = this.venuesData.length;
-        let numShown = 0;
-        if (numVenues > 10) {
-          for (let i = 0; i < Math.floor(numVenues / 10); i++) {
-            this.batches.set(i, {
-              "start": numShown,
-              "end": numShown + 9
-            });
-            numShown += 10;
-            this.numBatches++;
-          }
-          if (numShown < numVenues) {
-            this.batches.set(this.batches.values.length + 1, {
-              "start": numShown,
-              "end": numShown + ((numVenues - numShown) - 1)
-            });
-            this.numBatches++;
-          }
-          this.currentBatch = 0;
-        } else {
-          this.numBatches = 1;
-          this.currentBatch = 0;
-          this.batches.set(0, {
-            "start": 0,
-            "end": numVenues
-          });
-        }
-        console.log(this.numBatches);
-        console.log(this.currentBatch);
-        console.log(this.batches);
       },
       makePrimary: function (filename) {
         this.$http.post('http://localhost:4941/api/v1/venues/' + this.venuePhotoId + "/photos/" + filename +"/setPrimary", {}, {
