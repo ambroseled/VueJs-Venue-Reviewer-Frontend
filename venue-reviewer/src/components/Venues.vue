@@ -143,7 +143,7 @@
               </div>
               <div class="row">
                 <div v-if="showLongDesc">
-                  <a>Description: {{toView.venue.shortDescription}} {{toView.venue.shortDescription}}</a>
+                  <a>Description: {{toView.venue.shortDescription}} {{toView.venue.longDescription}}</a>
                 </div>
                 <div v-else>
                   <a>Description: {{toView.venue.shortDescription}}</a>
