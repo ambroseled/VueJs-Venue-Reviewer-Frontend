@@ -139,11 +139,8 @@
             this.profilePictureUpload = null;
             this.error = null;
           }, function (error) {
-            if (error.statusText === 'Not Found') {
-              alert('User profile not found');
-            } else {
-              alert("Error retrieving user profile");
-            }
+            console.log(error);
+            alert("Error retrieving user profile");
           });
       },
       saveEdit: function () {
@@ -195,11 +192,6 @@
             this.profilePicture = response.body;
             console.log(response.body);
           }, function (error) {
-            if (error.status === 404) {
-              alert("User: " + this.$route.params.userId + " profile picture not found");
-            } else {
-              alert("Error getting users profile picture");
-            }
           });
       },
       clearImage: function () {

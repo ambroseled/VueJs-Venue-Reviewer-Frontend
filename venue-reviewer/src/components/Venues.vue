@@ -56,10 +56,10 @@
       <div class="row">
         <div class="col">
           <a>
-            Viewing: {{batches.get(currentBatch).start + 1}} - {{batches.get(currentBatch).end + 1}} of {{venuesData.length}}
+            Viewing: {{venuesIndex}} - {{venuesIndex + venuesData.length - 1}}
           </a>
-          <b-button variant="primary" @click.prevent="currentBatch -= 1" :disabled="!(currentBatch > 0)">Previous</b-button>
-          <b-button variant="primary" @click.prevent="currentBatch += 1" :disabled="currentBatch > batches.values.length">Next</b-button>
+          <b-button variant="primary" @click.prevent="getBatch(venuesIndex - 10); venuesIndex-=10;" :disabled="venuesIndex <= 9">Previous</b-button>
+          <b-button variant="primary" @click.prevent="getBatch(venuesIndex + 10); venuesIndex+=10;" :disabled="venuesIndex >= (venuesData.length - 9)">Next</b-button>
         </div>
         <div class="col">
 
@@ -70,43 +70,43 @@
       </div>
 
       <div class="row">
-        <div v-for="(n, i) in (batches.get(currentBatch).end - batches.get(currentBatch).start) + 1" class="w-50">
+        <div v-for="venue in venuesData" class="w-50"> <!--(n, i) in (batches.get(currentBatch).end - batches.get(currentBatch).start) + 1"-->
           <b-card
-            :title="venuesData[i + batches.get(currentBatch).start].venueName">
+            :title="venue.venueName">
             <b-card-body>
-              <div v-if="venuesData[i + batches.get(currentBatch).start].primaryPhoto">
-               <img class="img-fill" :src="venuesData[i + batches.get(currentBatch).start].primaryPhoto" onerror="this.onerror=null; this.src='../assets/venueDefault.png'" alt="Image display failed">
+              <div v-if="venue.primaryPhoto">
+               <img class="img-fill" :src="venue.primaryPhoto" onerror="this.onerror=null; this.src='../assets/venueDefault.png'" alt="Image display failed">
               </div>
               <div v-else>
-                <img class="img-fill" src="../assets/venueDefault.png" alt="Display Failed"> <!-- Get default png-->
+                <img class="img-fill" src="../assets/venueDefault.png" alt="Display Failed">
               </div>
-              <h5>{{venuesData[i + batches.get(currentBatch).start].shortDescription}}</h5>
+              <h5>{{venue.shortDescription}}</h5>
               <div class="col">
                 <div class="row">
-                  <a>City: {{venuesData[i + batches.get(currentBatch).start].city}}</a>
+                  <a>City: {{venue.city}}</a>
                 </div>
                 <div class="row">
-                  <a>Category: {{categoriesMap.get(venuesData[i + batches.get(currentBatch).start].categoryId)}}</a>
+                  <a>Category: {{categoriesMap.get(venue.categoryId)}}</a>
                 </div>
-                <div v-if="venuesData[i + batches.get(currentBatch).start].meanStarRating" class="row">
-                  <a>Mean Star Rating: {{venuesData[i + batches.get(currentBatch).start].meanStarRating}}</a>
+                <div v-if="venue.meanStarRating" class="row">
+                  <a>Mean Star Rating: {{venue.meanStarRating}}</a>
                 </div>
                 <div v-else class="row">
                   <a>Mean Star Rating: 3</a>
                 </div>
-                <div class="row" v-if="venuesData[i + batches.get(currentBatch).start].modeCostRating">
-                  <a>Mode Cost Rating: {{venuesData[i + batches.get(currentBatch).start].modeCostRating}}</a>
+                <div class="row" v-if="venue.modeCostRating">
+                  <a>Mode Cost Rating: {{venue.modeCostRating}}</a>
                 </div>
                 <div v-else class="row">
                   <a>Mode Cost Rating: 0</a>
                 </div>
-                <div v-if="venuesData[i + batches.get(currentBatch).start].distance" class="row">
-                  <a>Distance: {{venuesData[i + batches.get(currentBatch).start].distance}}</a>
+                <div v-if="venue.distance" class="row">
+                  <a>Distance: {{venue.distance}}</a>
                 </div>
               </div>
               <div class="row">
                 <div class="col">
-                  <b-button block @click.prevent="setVenue(venuesData[i + batches.get(currentBatch).start], 0); venueError = null">More Details</b-button>
+                  <b-button block @click.prevent="setVenue(venue, 0); venueError = null">More Details</b-button>
                 </div>
               </div>
             </b-card-body>
@@ -556,7 +556,9 @@
         currentBatch: 0,
         numBatches: null,
         imageValid: true,
-        image: ""
+        image: "",
+        venuesIndex: 0,
+        venuesUrl: 'http://localhost:4941/api/v1/venues'
       }
     },
     mounted() {
@@ -566,11 +568,14 @@
         .then(coordinates => {
           this.myLatitude = coordinates.lat;
           this.myLongitude = coordinates.lng;
+          console.log(coordinates);
         });
     },
     methods: {
       getVenues: function () {
-        this.$http.get('http://localhost:4941/api/v1/venues')
+        this.venuesUrl = 'http://localhost:4941/api/v1/venues';
+        this.emptyFilters();
+        this.$http.get('http://localhost:4941/api/v1/venues?startIndex=0&count=10')
           .then(function (response) {
             this.venuesData = response.data;
             this.venuesToSelect = [];
@@ -601,6 +606,7 @@
           categorySet.add(this.venuesData[i].categoryId);
         }
         var temp = Array.from(citySet);
+        this.cities = [];
         for (var i = 0; i < temp.length; i++) {
           this.cities.push(temp[i]);
         }
@@ -610,6 +616,11 @@
         this.$http.get('http://localhost:4941/api/v1/categories')
           .then(function (response) {
             this.categoriesMap.clear();
+            this.categories = [];
+            this.categories.push({
+              "value": 0,
+              "text": "Select Category"
+            });
              for(let row of response.data) {
                 this.categories.push({
                   "value": row.categoryId,
@@ -622,29 +633,29 @@
           });
       },
       filterVenues: function () {
-        let url = 'http://localhost:4941/api/v1/venues';
+        this.venuesUrl = 'http://localhost:4941/api/v1/venues';
         let first = false;
         if (this.selected) {
           if (!first) {
-            url += "?";
+            this.venuesUrl += "?";
             first = true;
           }
-          url += "city=" + this.selected;
+          this.venuesUrl += "city=" + this.selected;
         }
         if (this.search) {
           if (!first) {
-            url += "?q=" + this.search;
+            this.venuesUrl += "?q=" + this.search;
             first = true;
           } else {
-            url += "&q=" + this.search;
+            this.venuesUrl += "&q=" + this.search;
           }
         }
         if (this.category) {
           if (!first) {
-            url += "?categoryId=" + this.category;
+            this.venuesUrl += "?categoryId=" + this.category;
             first = true;
           } else {
-            url += "&categoryId=" + this.category;
+            this.venuesUrl += "&categoryId=" + this.category;
           }
         }
         if (this.sortOption) {
@@ -669,49 +680,39 @@
             value = "DISTANCE";
             order = "true";
           }
+          if ((this.myLatitude === null || this.myLongitude === null) && value === "DISTANCE") {
+            alert("Location permissions disabled");
+            value = "STAR_RATING";
+            order = "false";
+          }
+          console.log(this.myLatitude);
           if (!first) {
-            url += "?sortBy=" + value + "&reverseSort=" + order;
+            this.venuesUrl += "?sortBy=" + value + "&reverseSort=" + order;
             first = true;
           } else {
-            url += "&sortBy=" + value + "&reverseSort=" + order;
+            this.venuesUrl += "&sortBy=" + value + "&reverseSort=" + order;
           }
           if (value === "DISTANCE") {
-            url += "&myLatitude=" + this.myLatitude;
-            url += "&myLongitude=" + this.myLongitude;
+            this.venuesUrl += "&myLatitude=" + this.myLatitude;
+            this.venuesUrl += "&myLongitude=" + this.myLongitude;
           }
         }
         if (this.minStar) {
           if (!first) {
-            url += "?minStarRating=" + this.minStar;
+            this.venuesUrl += "?minStarRating=" + this.minStar;
             first = true;
           } else {
-            url += "&minStarRating=" + this.minStar;
+            this.venuesUrl += "&minStarRating=" + this.minStar;
           }
         }
         if (this.maxCost) {
           if (!first) {
-            url += "?maxCostRating=" + this.maxCost;
-            first = true;
+            this.venuesUrl += "?maxCostRating=" + this.maxCost;
           } else {
-            url += "&maxCostRating=" + this.maxCost;
+            this.venuesUrl += "&maxCostRating=" + this.maxCost;
           }
         }
-        this.$http.get(url)
-          .then(function (response) {
-            this.venuesData = response.data;
-            this.venuesToSelect = [];
-            for (var i = 0; i < this.venuesData.length; i++) {
-              this.venuesToSelect.push({"text": this.venuesData[i].venueName, "value": this.venuesData[i].venueId});
-              if (this.venuesData[i].primaryPhoto) {
-                this.setPhoto(i);
-              }
-            }
-            this.formBatches();
-          }, function (error) {
-            alert("Error filtering venues, please try again");
-          });
-
-
+        this.getBatch(0);
       },
       setVenue: function (venue, isEdit) {
         this.$http.get('http://localhost:4941/api/v1/venues/' + venue.venueId)
@@ -775,7 +776,7 @@
         if (!this.starRating) {
           this.reviewError = "Star Rating is required"
         }
-        if (!this.costRating) {
+        if (!this.costRating && this.costRating !== 0) {
           this.reviewError = "Cost Rating is required"
         }
         if (!this.reviewBody) {
@@ -856,10 +857,14 @@
             this.venuesToSelect = [];
             for (var i = 0; i < response.data.length; i++) {
               this.venuesToSelect.push({"text": response.data[i].venueName, "value": response.data[i].venueId});
+              if (this.venuesData[i].primaryPhoto) {
+                this.setPhoto(i);
+              }
             }
             this.reviewVenue = response.data[0].venueId;
             this.setCities();
             this.setCategories();
+            this.formBatches();
           }, function (error) {
             alert("Error getting your venues");
           });
@@ -931,21 +936,34 @@
         this.batches.clear();
         let numVenues = this.venuesData.length;
         let numShown = 0;
-        for (let i = 0; i < Math.floor(numVenues / 10); i++) {
-          this.batches.set(i, {
-            "start": numShown,
-            "end": numShown + 9
+        if (numVenues > 10) {
+          for (let i = 0; i < Math.floor(numVenues / 10); i++) {
+            this.batches.set(i, {
+              "start": numShown,
+              "end": numShown + 9
+            });
+            numShown += 10;
+            this.numBatches++;
+          }
+          if (numShown < numVenues) {
+            this.batches.set(this.batches.values.length + 1, {
+              "start": numShown,
+              "end": numShown + ((numVenues - numShown) - 1)
+            });
+            this.numBatches++;
+          }
+          this.currentBatch = 0;
+        } else {
+          this.numBatches = 1;
+          this.currentBatch = 0;
+          this.batches.set(0, {
+            "start": 0,
+            "end": numVenues
           });
-          numShown += 10;
         }
-        if (numShown < numVenues) {
-          this.batches.set(this.batches.values.length + 1, {
-            "start": numShown,
-            "end": numShown + ((numVenues - numShown) - 1)
-          });
-        }
-        this.numBatches = this.batches.values.length;
-        this.currentBatch = 0;
+        console.log(this.numBatches);
+        console.log(this.currentBatch);
+        console.log(this.batches);
       },
       makePrimary: function (filename) {
         this.$http.post('http://localhost:4941/api/v1/venues/' + this.venuePhotoId + "/photos/" + filename +"/setPrimary", {}, {
@@ -958,6 +976,36 @@
           }, function (error) {
             alert("Error setting primary photo as: " + filename);
           });
+      },
+      getBatch: function (index) {
+        let url;
+        if (this.venuesUrl === 'http://localhost:4941/api/v1/venues') {
+          url = this.venuesUrl + '?startIndex=' + index + '&count=10'
+        } else {
+          url = this.venuesUrl + '&startIndex=' + index + '&count=10';
+        }
+        this.$http.get(url)
+          .then(function (response) {
+            this.venuesData = response.data;
+            this.venuesToSelect = [];
+            for (var i = 0; i < this.venuesData.length; i++) {
+              this.venuesToSelect.push({"text": this.venuesData[i].venueName, "value": this.venuesData[i].venueId});
+              if (this.venuesData[i].primaryPhoto) {
+                this.setPhoto(i);
+              }
+            }
+            this.reviewVenue = response.data[0].venueId;
+          }, function (error) {
+            alert("Error retrieving venues");
+          });
+      },
+      emptyFilters: function () {
+        this.selected = "";
+        this.search = "";
+        this.category = 0;
+        this.sortOption = "high - low star rating";
+        this.minStar = null;
+        this.maxCost = 0;
       }
     },
     validations: {
