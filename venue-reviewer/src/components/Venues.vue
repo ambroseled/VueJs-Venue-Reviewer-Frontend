@@ -833,8 +833,8 @@
           "shortDescription": this.shortDescription,
           "longDescription": this.longDescription,
           "address": this.venueAddress,
-          "latitude": this.latitude,
-          "longitude": this.longitude
+          "latitude": parseFloat(this.latitude),
+          "longitude": parseFloat(this.longitude)
         }), {
           headers: {
             'Content-Type': 'application/json',
